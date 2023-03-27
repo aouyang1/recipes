@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -98,25 +99,25 @@ func main() {
 	}
 
 	calendarSummary := "Dinner Plans"
-	calId, err := getCalendarId(srv, calendarSummary)
+	calId, err := GetCalendarId(srv, calendarSummary)
 	if err != nil {
 		log.Fatalf("error while fetching for calendar, %q, %v", calendarSummary, err)
 	}
-	calEvents, err := getEvents(srv, calId, "")
+	calEvents, err := GetAllEvents(srv, calId)
 	if err != nil {
 		log.Fatalf("error while fetching events for calendar, %q, %v", calendarSummary, err)
 	}
 
-	for _, e := range calEvents {
-		date := e.Start.Date
-		if date == "" {
-			continue
-		}
-		fmt.Printf("(%v) %v\n", date, e.Summary)
+	recEvents, err := ToRecipeEvents(calEvents)
+	if err != nil {
+		log.Fatalf("failed to parse all events into recipe events, %v", err)
+	}
+	for _, e := range recEvents {
+		fmt.Println(e)
 	}
 }
 
-func getCalendarId(srv *calendar.Service, calSummary string) (string, error) {
+func GetCalendarId(srv *calendar.Service, calSummary string) (string, error) {
 	calendars, err := srv.CalendarList.List().Do()
 	if err != nil {
 		return "", fmt.Errorf("unable to retrieve next ten of the user's events: %w", err)
@@ -129,6 +130,10 @@ func getCalendarId(srv *calendar.Service, calSummary string) (string, error) {
 		}
 	}
 	return "", ErrCalendarNotFound
+}
+
+func GetAllEvents(srv *calendar.Service, calId string) ([]*calendar.Event, error) {
+	return getEvents(srv, calId, "")
 }
 
 func getEvents(srv *calendar.Service, calId, pageToken string) ([]*calendar.Event, error) {
@@ -151,4 +156,28 @@ func getEvents(srv *calendar.Service, calId, pageToken string) ([]*calendar.Even
 		res = append(res, nextRes...)
 	}
 	return res, nil
+}
+
+func ToRecipeEvents(calEvents []*calendar.Event) ([]*RecipeEvent, error) {
+	recEvents := make([]*RecipeEvent, 0, len(calEvents))
+	for _, e := range calEvents {
+		date := e.Start.Date
+		if date == "" {
+			continue
+		}
+
+		dt, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			return nil, err
+		}
+
+		rec := &RecipeEvent{
+			Id:          e.Id,
+			Date:        dt,
+			Title:       e.Summary,
+			Description: e.Description,
+		}
+		recEvents = append(recEvents, rec)
+	}
+	return recEvents, nil
 }
