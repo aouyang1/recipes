@@ -1,5 +1,4 @@
 CREATE DATABASE IF NOT EXISTS recipes;
-GRANT ALL ON recipes.* TO 'recipes'@'localhost';
 
 CREATE TABLE IF NOT EXISTS recipe_event (
     id VARCHAR(60),
@@ -51,5 +50,4 @@ CREATE TABLE IF NOT EXISTS recipe_ingredient (
 );
 CREATE INDEX ingredient_id_idx ON recipe_ingredient (ingredient_id);
 
-
-
+GRANT ALL ON recipes.* TO 'recipes'@'localhost';
