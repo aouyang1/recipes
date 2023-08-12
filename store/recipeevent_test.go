@@ -55,14 +55,14 @@ func TestInsertRecipeEventContext(t *testing.T) {
 			defer Cleanup(client.conn)
 
 			for _, revent := range td.recipeEvent {
-				if err := client.UpsertRecipeEventContext(context.Background(), revent); err != nil {
+				if err := client.UpsertRecipeEvent(context.Background(), revent); err != nil {
 					assert.ErrorIs(t, err, td.err)
 					return
 				}
 				assert.Nil(t, td.err)
 			}
 
-			exists, err := client.ExistsRecipeEventContext(context.Background(), td.recipeEvent[len(td.recipeEvent)-1])
+			exists, err := client.ExistsRecipeEvent(context.Background(), td.recipeEvent[len(td.recipeEvent)-1])
 			require.Nil(t, err)
 			assert.True(t, exists)
 		})

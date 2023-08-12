@@ -26,7 +26,7 @@ type Tag struct {
 
 type RecipeToTag struct {
 	RecipeID uint64 `db:"recipe_id"`
-	TagID    uint64 `db:"tag"`
+	TagID    uint64 `db:"tag_id"`
 }
 
 type Ingredient struct {
@@ -37,7 +37,8 @@ type Ingredient struct {
 type RecipeToIngredient struct {
 	RecipeID     uint64 `db:"recipe_id"`
 	IngredientID uint64 `db:"ingredient_id"`
-	Quantity     int    `db:"quantity"`
-	Unit         string `db:"unit"`
-	Size         string `db:"size"`
+
+	Quantity int    `db:"quantity"`
+	Unit     string `db:"unit"`
+	Size     string `db:"size"`
 }

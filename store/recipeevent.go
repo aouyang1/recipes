@@ -10,39 +10,22 @@ var (
 	ErrNilRecipeEvent = errors.New("nil recipe event")
 )
 
-func (c *Client) UpsertRecipeEventContext(ctx context.Context, recipeEvent *models.RecipeEvent) error {
+func (c *Client) UpsertRecipeEvent(ctx context.Context, recipeEvent *models.RecipeEvent) error {
 	if recipeEvent == nil {
 		return ErrNilRecipeEvent
 	}
 
-	exists, err := c.ExistsRecipeEventContext(ctx, recipeEvent)
-	if err != nil {
-		return err
-	}
-
-	// insert new record
-	if !exists {
-		_, err := c.conn.NamedExecContext(
-			ctx,
-			`INSERT INTO recipe_event (id, schedule_date, title, description)
-		 	  	  VALUES (:id, :schedule_date, :title, :description)`,
-			recipeEvent,
-		)
-		return err
-	}
-
-	// update
-	_, err = c.conn.NamedExecContext(
+	_, err := c.conn.NamedExecContext(
 		ctx,
-		`UPDATE recipe_event
-			SET schedule_date = :schedule_date, title = :title, description = :description
-		  WHERE id = :id`,
+		`INSERT INTO recipe_event (id, schedule_date, title, description)
+		 	  	  VALUES (:id, :schedule_date, :title, :description)
+		 ON DUPLICATE KEY UPDATE schedule_date = :schedule_date, title = :title, description = :description`,
 		recipeEvent,
 	)
 	return err
 }
 
-func (c *Client) ExistsRecipeEventContext(ctx context.Context, recipeEvent *models.RecipeEvent) (bool, error) {
+func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEvent *models.RecipeEvent) (bool, error) {
 	if recipeEvent == nil {
 		return false, ErrNilRecipeEvent
 	}

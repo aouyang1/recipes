@@ -151,7 +151,7 @@ func (c *CalendarFetcher) storeEvents(recEvents []*models.RecipeEvent) error {
 			Title:        e.Title,
 			Description:  e.Description,
 		}
-		if err := c.store.UpsertRecipeEventContext(ctx, storeRecipeEvent); err != nil {
+		if err := c.store.UpsertRecipeEvent(ctx, storeRecipeEvent); err != nil {
 			cancel()
 			return fmt.Errorf("failed to upsert recipe event, %v, %w", e, err)
 		}

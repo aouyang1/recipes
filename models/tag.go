@@ -1,6 +1,11 @@
 package models
 
-type Tag struct {
-	ID   uint64
-	Name string
+import (
+	"github.com/cespare/xxhash"
+)
+
+type Tag string
+
+func (t Tag) GetID() uint64 {
+	return xxhash.Sum64String(string(t))
 }
