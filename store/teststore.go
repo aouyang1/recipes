@@ -27,11 +27,12 @@ func TestConfig() *mysql.Config {
 
 func Cleanup(conn *sqlx.DB) error {
 	tx := conn.MustBegin()
-	tx.MustExec("TRUNCATE TABLE recipe_event")
 	tx.MustExec("TRUNCATE TABLE recipe_event_to_recipe")
+	tx.MustExec("TRUNCATE TABLE recipe_to_tag")
+	tx.MustExec("TRUNCATE TABLE recipe_to_ingredient")
+	tx.MustExec("TRUNCATE TABLE recipe_event")
 	tx.MustExec("TRUNCATE TABLE recipe")
-	tx.MustExec("TRUNCATE TABLE recipe_tag")
+	tx.MustExec("TRUNCATE TABLE tag")
 	tx.MustExec("TRUNCATE TABLE ingredient")
-	tx.MustExec("TRUNCATE TABLE recipe_ingredient")
 	return tx.Commit()
 }

@@ -51,7 +51,7 @@ func (c *Client) ExistsRecipeEventContext(ctx context.Context, recipeEvent *mode
 	err := c.conn.QueryRowxContext(
 		ctx,
 		`SELECT COUNT(id) FROM recipe_event WHERE id = ?`,
-		recipeEvent.Id,
+		recipeEvent.ID,
 	).Scan(&cnt)
 	if err != nil {
 		return false, err

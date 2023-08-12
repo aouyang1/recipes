@@ -2,6 +2,6 @@ package store
 
 import "recipes/store/models"
 
-func (c *Client) InsertRecipeTag(recipeTag *models.RecipeTag) error {
+func (c *Client) InsertRecipeToTag(recipeTag *models.RecipeToTag) error {
 	return nil
 }

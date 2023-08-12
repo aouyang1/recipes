@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"recipes/store"
-	"recipes/store/models"
 	"time"
+
+	"recipes/models"
+	"recipes/store"
+	storemodels "recipes/store/models"
 
 	"github.com/go-sql-driver/mysql"
 	"golang.org/x/oauth2"
@@ -138,8 +140,8 @@ func main() {
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), TimeoutUpsertRecipeEvent)
-		storeRecipeEvent := &models.RecipeEvent{
-			Id:           e.Id,
+		storeRecipeEvent := &storemodels.RecipeEvent{
+			ID:           e.ID,
 			ScheduleDate: e.Date.Unix(),
 			Title:        e.Title,
 			Description:  e.Description,
@@ -193,8 +195,8 @@ func getEvents(srv *calendar.Service, calId, pageToken string) ([]*calendar.Even
 	return res, nil
 }
 
-func ToRecipeEvents(calEvents []*calendar.Event) ([]*RecipeEvent, error) {
-	recEvents := make([]*RecipeEvent, 0, len(calEvents))
+func ToRecipeEvents(calEvents []*calendar.Event) ([]*models.RecipeEvent, error) {
+	recEvents := make([]*models.RecipeEvent, 0, len(calEvents))
 	for _, e := range calEvents {
 		date := e.Start.Date
 		if date == "" {
@@ -206,8 +208,8 @@ func ToRecipeEvents(calEvents []*calendar.Event) ([]*RecipeEvent, error) {
 			return nil, err
 		}
 
-		rec := &RecipeEvent{
-			Id:          e.Id,
+		rec := &models.RecipeEvent{
+			ID:          e.Id,
 			Date:        dt,
 			Title:       e.Summary,
 			Description: e.Description,

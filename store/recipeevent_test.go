@@ -20,7 +20,7 @@ func TestInsertRecipeEventContext(t *testing.T) {
 		"insert new event": {
 			[]*models.RecipeEvent{
 				{
-					Id:           "asdf",
+					ID:           "asdf",
 					ScheduleDate: 1234,
 					Title:        "myrecipe",
 					Description:  "Step1: bake",
@@ -31,13 +31,13 @@ func TestInsertRecipeEventContext(t *testing.T) {
 		"update event": {
 			[]*models.RecipeEvent{
 				{
-					Id:           "asdf",
+					ID:           "asdf",
 					ScheduleDate: 1234,
 					Title:        "myrecipe",
 					Description:  "Step1: bake",
 				},
 				{
-					Id:           "asdf",
+					ID:           "asdf",
 					ScheduleDate: 4321,
 					Title:        "myrecipe2",
 					Description:  "Step2: cook",
