@@ -22,16 +22,13 @@ import (
 	"google.golang.org/api/option"
 )
 
-const (
-	calendarSummary = "Dinner Plans"
-)
-
 var (
 	GOOGLE_API_CREDENTIALS_PATH = os.Getenv("GOOGLE_API_CREDENTIALS_PATH")
 
 	ErrCalendarNotFound = errors.New("calendar not found")
 
-	TimeoutUpsertRecipeEvent = time.Duration(3 * time.Second)
+	NewServiceTimeout        = time.Duration(5 * time.Second)
+	UpsertRecipeEventTimeout = time.Duration(3 * time.Second)
 )
 
 type CalendarFetcher struct {
@@ -39,7 +36,7 @@ type CalendarFetcher struct {
 	store  *store.Client
 }
 
-func NewCalendarFetcher() (*CalendarFetcher, error) {
+func NewCalendarFetcher(calendarSummary string) (*CalendarFetcher, error) {
 	b, err := os.ReadFile(path.Join(GOOGLE_API_CREDENTIALS_PATH, "credentials.json"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to read client secret file: %w", err)
@@ -52,7 +49,7 @@ func NewCalendarFetcher() (*CalendarFetcher, error) {
 	}
 	client := getClient(config)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), NewServiceTimeout)
 
 	svc, err := calendar.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
@@ -147,7 +144,7 @@ func (c *CalendarFetcher) storeEvents(recEvents []*models.RecipeEvent) error {
 			continue
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), TimeoutUpsertRecipeEvent)
+		ctx, cancel := context.WithTimeout(context.Background(), UpsertRecipeEventTimeout)
 		storeRecipeEvent := &storemodels.RecipeEvent{
 			ID:           e.ID,
 			ScheduleDate: e.Date.Unix(),
