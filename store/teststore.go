@@ -11,14 +11,8 @@ type TestClient struct {
 	conn *sqlx.DB
 }
 
-func NewTestClient() (*TestClient, error) {
-	client, err := NewClient(TestConfig())
-	if err != nil {
-		return nil, err
-	}
-	return &TestClient{
-		conn: client.conn,
-	}, nil
+func NewTestClient() (*Client, error) {
+	return NewClient(TestConfig())
 }
 
 func TestConfig() *mysql.Config {
@@ -31,8 +25,8 @@ func TestConfig() *mysql.Config {
 	}
 }
 
-func (t *TestClient) Cleanup() error {
-	tx := t.conn.MustBegin()
+func Cleanup(conn *sqlx.DB) error {
+	tx := conn.MustBegin()
 	tx.MustExec("TRUNCATE TABLE recipe_event")
 	tx.MustExec("TRUNCATE TABLE recipe_event_to_recipe")
 	tx.MustExec("TRUNCATE TABLE recipe")

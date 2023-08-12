@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"recipes/store"
+	"recipes/store/models"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -21,6 +24,8 @@ var (
 	GOOGLE_API_CREDENTIALS_PATH = os.Getenv("GOOGLE_API_CREDENTIALS_PATH")
 
 	ErrCalendarNotFound = errors.New("calendar not found")
+
+	TimeoutUpsertRecipeEvent = time.Duration(3 * time.Second)
 )
 
 // Retrieve a token, saves the token, then returns the generated client.
@@ -112,15 +117,45 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to parse all events into recipe events, %v", err)
 	}
+
+	storeClient, err := store.NewClient(
+		&mysql.Config{
+			User:   os.Getenv("USER_MYSQL_USERNAME"),
+			Passwd: os.Getenv("USER_MYSQL_PASSWORD"),
+			DBName: os.Getenv("USER_MYSQL_DB"),
+			Net:    "tcp",
+			Addr:   "localhost",
+		},
+	)
+	if err != nil {
+		log.Fatalf("failed to create store client, %v", err)
+	}
+
 	for _, e := range recEvents {
-		fmt.Println(e)
+		// don't track events that have no description
+		if e.Description == "" {
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), TimeoutUpsertRecipeEvent)
+		storeRecipeEvent := &models.RecipeEvent{
+			Id:           e.Id,
+			ScheduleDate: e.Date.Unix(),
+			Title:        e.Title,
+			Description:  e.Description,
+		}
+		if err := storeClient.UpsertRecipeEventContext(ctx, storeRecipeEvent); err != nil {
+			log.Fatalf("failed to upsert recipe event, %v, %v", e, err)
+		}
+		cancel()
+		fmt.Println(e.Title)
 	}
 }
 
 func GetCalendarId(srv *calendar.Service, calSummary string) (string, error) {
 	calendars, err := srv.CalendarList.List().Do()
 	if err != nil {
-		return "", fmt.Errorf("unable to retrieve next ten of the user's events: %w", err)
+		return "", fmt.Errorf("unable to retrieve events: %w", err)
 	}
 
 	// expecting only one match
