@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"recipes/store/models"
 )
 
 var (
-	ErrNilRecipeEvent = errors.New("nil recipe event")
+	ErrNilRecipeEvent      = errors.New("nil recipe event")
+	ErrRecipeEventNotFound = errors.New("recipe event not found")
 )
 
 func (c *Client) UpsertRecipeEvent(ctx context.Context, recipeEvent *models.RecipeEvent) error {
@@ -25,8 +27,8 @@ func (c *Client) UpsertRecipeEvent(ctx context.Context, recipeEvent *models.Reci
 	return err
 }
 
-func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEvent *models.RecipeEvent) (bool, error) {
-	if recipeEvent == nil {
+func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEventID string) (bool, error) {
+	if recipeEventID == "" {
 		return false, ErrNilRecipeEvent
 	}
 
@@ -34,9 +36,12 @@ func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEvent *models.Reci
 	err := c.conn.QueryRowxContext(
 		ctx,
 		`SELECT COUNT(id) FROM recipe_event WHERE id = ?`,
-		recipeEvent.ID,
+		recipeEventID,
 	).Scan(&cnt)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, ErrRecipeEventNotFound
+		}
 		return false, err
 	}
 	return cnt > 0, nil

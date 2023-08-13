@@ -84,9 +84,13 @@ func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string)
 	return res, nil
 }
 
-func (c *Client) GetIngredientRecipes(ctx context.Context, name string) ([]*models.Recipe, error) {
-	if name == "" {
-		return nil, ErrInvalidIngredient
+func (c *Client) GetIngredientRecipes(ctx context.Context, ingredients []string) ([]*models.Recipe, error) {
+	if len(ingredients) == 0 {
+		return nil, nil
+	}
+
+	for i, ingredient := range ingredients {
+		ingredients[i] = strings.ToLower(ingredient)
 	}
 
 	rows, err := c.conn.QueryContext(
@@ -95,9 +99,10 @@ func (c *Client) GetIngredientRecipes(ctx context.Context, name string) ([]*mode
 		   FROM recipe 
 		   JOIN (SELECT recipe_id
 		           FROM recipe_to_ingredient
-		          WHERE ingredient_id = (SELECT id FROM ingredient WHERE name = ?) as r2i
+		           JOIN (SELECT id FROM ingredient WHERE name IN (?))
+				     ON recipe_to_ingredient.ingredient_id = ingredient.id) as r2i 
 			 ON recipe.id = r2i.recipe_id`,
-		strings.ToLower(name),
+		ingredients,
 	)
 	if err != nil {
 		return nil, err
@@ -155,7 +160,7 @@ func (c *Client) DeleteRecipeToIngredient(ctx context.Context, params DeleteReci
 	if err != nil {
 		return err
 	}
-	if cnt != 0 {
+	if cnt == 0 {
 		return ErrRecipeToIngredientNotFound
 	}
 	return nil
