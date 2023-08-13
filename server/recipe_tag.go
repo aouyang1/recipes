@@ -30,12 +30,11 @@ func (s *Server) PostRecipeTag(c *gin.Context) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), PostRecipeTagTimeout)
+	defer cancel()
 	if err := s.postRecipeTag(ctx, &req); err != nil {
-		cancel()
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	cancel()
 	c.Status(http.StatusOK)
 }
 

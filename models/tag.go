@@ -6,6 +6,6 @@ import (
 
 type Tag string
 
-func (t Tag) GetID() uint64 {
+func (t Tag) ID() uint64 {
 	return xxhash.Sum64String(string(t))
 }

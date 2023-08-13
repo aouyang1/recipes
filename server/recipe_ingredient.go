@@ -34,12 +34,11 @@ func (s *Server) PostRecipeIngredient(c *gin.Context) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), PostRecipeIngredientTimeout)
+	defer cancel()
 	if err := s.postRecipeIngredient(ctx, &req); err != nil {
-		cancel()
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	cancel()
 	c.Status(http.StatusOK)
 }
 

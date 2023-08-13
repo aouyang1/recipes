@@ -43,6 +43,10 @@ func NewServer() (*Server, error) {
 	router.DELETE("/recipe_tag", s.DeleteRecipeTag)
 	router.POST("/recipe_ingredient", s.PostRecipeIngredient)
 	router.DELETE("/recipe_ingredient", s.DeleteRecipeIngredient)
+	router.GET("/tags", s.GetTags)
+	router.POST("/tag", s.PostTag)
+	router.GET("/ingredients", s.GetIngredients)
+	router.POST("/ingredient", s.PostIngredient)
 
 	return s, nil
 }
@@ -56,11 +60,7 @@ func (s *Server) Run() error {
 
 /*
 
-GET /tags
-POST /tag {name: italian}
 DELETE /tag {name: italian}
 
-GET /ingredients
-POST /ingredient {name: onion}
 DELETE /ingredient {name: onion}
 */

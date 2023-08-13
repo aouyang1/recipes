@@ -23,13 +23,12 @@ func (s *Server) GetRecipes(c *gin.Context) {
 	tag := c.Query("tag")
 
 	ctx, cancel := context.WithTimeout(context.Background(), GetRecipesTimeout)
+	defer cancel()
 	recipes, err := s.getRecipes(ctx, query, recipeEventID, ingredient, tag)
 	if err != nil {
-		cancel()
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	cancel()
 	c.JSON(200, recipes)
 }
 
