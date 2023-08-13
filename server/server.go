@@ -38,6 +38,9 @@ func NewServer() (*Server, error) {
 
 	router.GET("/recipe_events", s.GetRecipeEvents)
 	router.GET("/recipes", s.GetRecipes)
+	router.POST("/recipe", s.PostRecipe)
+	router.POST("/recipe_tag", s.PostRecipeTag)
+	router.DELETE("/recipe_tag", s.DeleteRecipeTag)
 
 	return s, nil
 }
@@ -50,11 +53,6 @@ func (s *Server) Run() error {
 }
 
 /*
-GET /recipe?name=chicken%20marsala&variant=bonapetit
-POST /recipe?name=chicken%20marsala&variant=bonapetit
-
-POST /recipe_tag {recipe_name: chicken marsala, recipe_variant: bonapetit, tag: italian}
-DELETE /recipe_tag {recipe_name: chicken marsala, recipe_variant: bonapetit, tag: italian}
 
 GET /tags
 POST /tag {name: italian}

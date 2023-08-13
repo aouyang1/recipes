@@ -14,6 +14,7 @@ var (
 	GetRecipeEventsTimeout = time.Duration(5 * time.Second)
 )
 
+// GetRecipeEvents returns recipe events
 func (s *Server) GetRecipeEvents(c *gin.Context) {
 	recipeName := c.Query("recipe_name")
 	recipeVariant := c.Query("recipe_variant")

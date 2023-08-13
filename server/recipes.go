@@ -14,8 +14,7 @@ var (
 	GetRecipesTimeout = time.Duration(5 * time.Second)
 )
 
-// GET /recipes?recipe_event_id=asdf&query=foo&ingredient=onion&tag=italian
-
+// GetRecipes returns recipes
 func (s *Server) GetRecipes(c *gin.Context) {
 	// query params in order of priority
 	query := c.Query("query")
@@ -24,14 +23,14 @@ func (s *Server) GetRecipes(c *gin.Context) {
 	tag := c.Query("tag")
 
 	ctx, cancel := context.WithTimeout(context.Background(), GetRecipesTimeout)
-	recipeEvents, err := s.getRecipes(ctx, query, recipeEventID, ingredient, tag)
+	recipes, err := s.getRecipes(ctx, query, recipeEventID, ingredient, tag)
 	if err != nil {
 		cancel()
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 	cancel()
-	c.JSON(200, recipeEvents)
+	c.JSON(200, recipes)
 }
 
 func (s *Server) getRecipes(ctx context.Context, query, recipeEventID, ingredient, tag string) ([]*models.Recipe, error) {
@@ -51,6 +50,7 @@ func (s *Server) getRecipes(ctx context.Context, query, recipeEventID, ingredien
 }
 
 func (s *Server) getRecipesByQuery(ctx context.Context, query string) ([]*models.Recipe, error) {
+	// TODO: implement
 	return nil, nil
 }
 
