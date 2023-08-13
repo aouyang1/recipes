@@ -142,16 +142,16 @@ func (c *Client) GetIngredientRecipes(ctx context.Context, ingredients []string)
 }
 
 type DeleteRecipeToIngredientParams struct {
-	RecipeName     string `db:"recipe_name"`
-	RecipeVariant  string `db:"recipe_variant"`
-	IngredientName string `db:"ingredient_name"`
+	RecipeName    string `db:"recipe_name"`
+	RecipeVariant string `db:"recipe_variant"`
+	Ingredient    string `db:"ingredient"`
 }
 
 func (c *Client) DeleteRecipeToIngredient(ctx context.Context, params DeleteRecipeToIngredientParams) error {
 	if params.RecipeName == "" {
 		return ErrInvalidRecipe
 	}
-	if params.IngredientName == "" {
+	if params.Ingredient == "" {
 		return ErrInvalidIngredient
 	}
 
@@ -161,7 +161,7 @@ func (c *Client) DeleteRecipeToIngredient(ctx context.Context, params DeleteReci
 		ctx,
 		`DELETE FROM recipe_to_ingredient
 		       WHERE recipe_id = (SELECT id FROM recipe WHERE name = :recipe_name AND variant = :recipe_variant)
-			     AND ingredient_id = (SELECT id FROM ingredient WHERE name = :ingredient_name)`,
+			     AND ingredient_id = (SELECT id FROM ingredient WHERE name = :ingredient)`,
 		params,
 	)
 	if err != nil {

@@ -10,10 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
-DELETE /recipe_tag {recipe_name: chicken marsala, recipe_variant: bonapetit, tag: italian}
-*/
-
 var (
 	PostRecipeTagTimeout   = time.Duration(5 * time.Second)
 	DeleteRecipeTagTimeout = time.Duration(5 * time.Second)
