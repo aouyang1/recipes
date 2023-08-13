@@ -59,7 +59,7 @@ func (c *Client) GetRecipeTags(ctx context.Context, name, variant string) ([]*mo
 		          WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?) as r2t
 			 ON tag.id = r2t.tag_id`,
 		strings.ToLower(name),
-		strings.ToLower(variant),
+		LowerVariant(variant),
 	)
 	if err != nil {
 		return nil, err
@@ -146,6 +146,8 @@ func (c *Client) DeleteRecipeToTag(ctx context.Context, params DeleteRecipeToTag
 	if params.Tag == "" {
 		return ErrInvalidTag
 	}
+
+	params.RecipeVariant = LowerVariant(params.RecipeVariant)
 
 	result, err := c.conn.NamedExecContext(
 		ctx,
