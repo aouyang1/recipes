@@ -105,7 +105,8 @@ func (c *Client) GetRecipeRecipeEvents(ctx context.Context, name, variant string
 		   JOIN (SELECT recipe_event_id
 		           FROM recipe_event_to_recipe
 				  WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?)) as re2r
-			 ON recipe_event.id = re2r.recipe_event_id`,
+			 ON recipe_event.id = re2r.recipe_event_id
+	   ORDER BY schedule_date DESC`,
 		strings.ToLower(name),
 		LowerVariant(variant),
 	)

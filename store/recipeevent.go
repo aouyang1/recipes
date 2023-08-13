@@ -46,3 +46,26 @@ func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEventID string) (b
 	}
 	return cnt > 0, nil
 }
+
+func (c *Client) GetRecipeEvents(ctx context.Context) ([]*models.RecipeEvent, error) {
+	rows, err := c.conn.QueryxContext(
+		ctx,
+		`SELECT id, schedule_date, title, description
+		   FROM recipe_event
+	   ORDER BY schedule_date DESC`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var recipeEvents []*models.RecipeEvent
+	for rows.Next() {
+		var recipeEvent models.RecipeEvent
+		if err := rows.StructScan(&recipeEvent); err != nil {
+			return nil, err
+		}
+		recipeEvents = append(recipeEvents, &recipeEvent)
+	}
+	return recipeEvents, nil
+}

@@ -14,10 +14,10 @@ var (
 
 // RecipeEvent represents an occurrence of a recipe taken from the calendar
 type RecipeEvent struct {
-	ID          string // max 60 character id
-	Date        time.Time
-	Title       string
-	Description string
+	ID          string    `json:"id"` // max 60 character id
+	Date        time.Time `json:"date"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
 }
 
 func (r RecipeEvent) String() string {

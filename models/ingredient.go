@@ -5,11 +5,11 @@ import (
 )
 
 type Ingredient struct {
-	Name string
+	Name string `json:"name"`
 
-	Quantity int
-	Size     Size
-	Unit     Unit
+	Quantity int  `json:"quantity"`
+	Size     Size `json:"size,omitempty"`
+	Unit     Unit `json:"unit,omitempty"`
 }
 
 func (i *Ingredient) ID() uint64 {

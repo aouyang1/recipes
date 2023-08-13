@@ -6,11 +6,11 @@ import (
 
 // Recipe represents a normalized representation of a recipe
 type Recipe struct {
-	Name    string // Chicken Marsala
-	Variant string // bonapetit, new york times, etc.
+	Name    string `json:"name"`    // Chicken Marsala
+	Variant string `json:"variant"` // url link or bonapetit, new york times, etc.
 
-	Tags        map[Tag]struct{}       // Italian, Noodles, Meat, etc.
-	Ingredients map[string]*Ingredient // key is name of ingredient
+	Tags        []Tag         `json:"tags"` // Italian, Noodles, Meat, etc.
+	Ingredients []*Ingredient `json:"ingredients"`
 }
 
 func (r *Recipe) ID() uint64 {

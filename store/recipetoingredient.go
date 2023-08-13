@@ -44,16 +44,16 @@ func (c *Client) UpsertRecipeToIngredient(ctx context.Context, recipeName, recip
 	return err
 }
 
-func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string) ([]*models.Ingredient, error) {
+func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string) ([]*models.Ingredient, []*models.RecipeToIngredient, error) {
 	if name == "" {
-		return nil, ErrInvalidRecipe
+		return nil, nil, ErrInvalidRecipe
 	}
 
 	rows, err := c.conn.QueryContext(
 		ctx,
-		`SELECT id, name
+		`SELECT id, name, quantity, unit, size
 		   FROM ingredient
-		   JOIN (SELECT ingredient_id
+		   JOIN (SELECT ingredient_id, quantity, unit, size
 		           FROM recipe_to_ingredient
 		          WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?) as r2i
 			 ON ingredient.id = r2i.ingredient_id`,
@@ -61,27 +61,36 @@ func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string)
 		LowerVariant(variant),
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
 	var res []*models.Ingredient
+	var quant []*models.RecipeToIngredient
 	for rows.Next() {
 		var id uint64
 		var name string
-		if err := rows.Scan(&id, &name); err != nil {
-			return nil, err
+		var quantity int
+		var unit string
+		var size string
+		if err := rows.Scan(&id, &name, &quantity, &unit, &size); err != nil {
+			return nil, nil, err
 		}
 		res = append(res, &models.Ingredient{
 			ID:   id,
 			Name: name,
 		})
+		quant = append(quant, &models.RecipeToIngredient{
+			Quantity: quantity,
+			Unit:     unit,
+			Size:     size,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return res, nil
+	return res, quant, nil
 }
 
 func (c *Client) GetIngredientRecipes(ctx context.Context, ingredients []string) ([]*models.Recipe, error) {
