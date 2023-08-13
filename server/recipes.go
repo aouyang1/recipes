@@ -16,7 +16,6 @@ var (
 
 // GetRecipes returns recipes
 func (s *Server) GetRecipes(c *gin.Context) {
-	// query params in order of priority
 	query := c.Query("query")
 	recipeEventID := c.Query("recipe_event_id")
 	ingredient := c.Query("ingredient")
@@ -33,9 +32,6 @@ func (s *Server) GetRecipes(c *gin.Context) {
 }
 
 func (s *Server) getRecipes(ctx context.Context, query, recipeEventID, ingredient, tag string) ([]*models.Recipe, error) {
-	if query != "" {
-		return s.getRecipesByQuery(ctx, query)
-	}
 	if recipeEventID != "" {
 		return s.getRecipesByRecipeEventID(ctx, recipeEventID)
 	}
@@ -44,6 +40,9 @@ func (s *Server) getRecipes(ctx context.Context, query, recipeEventID, ingredien
 	}
 	if tag != "" {
 		return s.getRecipesByTag(ctx, tag)
+	}
+	if query != "" {
+		return s.getRecipesByQuery(ctx, query)
 	}
 	return nil, nil
 }

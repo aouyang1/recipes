@@ -14,6 +14,7 @@ var (
 	GetIngredientsTimeout = time.Duration(5 * time.Second)
 )
 
+// GetIngredients returns all ingredients
 func (s *Server) GetIngredients(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GetIngredientsTimeout)
 	defer cancel()

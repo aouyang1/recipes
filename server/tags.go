@@ -14,6 +14,7 @@ var (
 	GetTagsTimeout = time.Duration(5 * time.Second)
 )
 
+// GetTags returns all tags
 func (s *Server) GetTags(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GetTagsTimeout)
 	defer cancel()
