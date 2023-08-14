@@ -36,6 +36,10 @@ func NewServer() (*Server, error) {
 		store:  storeClient,
 	}
 
+	router.LoadHTMLFiles("static/index.html")
+	router.Static("/static", "static")
+
+	router.GET("/", s.Index)
 	router.GET("/recipe_events", s.GetRecipeEvents)
 
 	router.GET("/recipes", s.GetRecipes)
@@ -56,6 +60,10 @@ func NewServer() (*Server, error) {
 	router.DELETE("/ingredient", s.DeleteIngredient)
 
 	return s, nil
+}
+
+func (s *Server) Index(c *gin.Context) {
+	c.HTML(200, "index.html", nil)
 }
 
 func (s *Server) Run() error {
