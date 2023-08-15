@@ -35,6 +35,7 @@ function getRecipesByRecipeEventID(recipe_event_id) {
         .get(function(error, data) {
             if (error) throw error;
             recipes = JSON.parse(data.response);
+            recipes = [{name: "blargh"}, {name: "foo"}]
             list = d3.select("#list-sub-items");
             list.selectAll("*").remove();
 
@@ -60,7 +61,7 @@ function getRecipesByRecipeEventID(recipe_event_id) {
                 .data([recipe_event_id])
                 .enter()
                 .append("div")
-                    .attr("class", "btn-group");
+                    .attr("class", "btn-group p-4");
 
             btnGroup
                 .append("button")
