@@ -55,10 +55,10 @@ func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string)
 		   FROM ingredient
 		   JOIN (SELECT ingredient_id, quantity, unit, size
 		           FROM recipe_to_ingredient
-		          WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?) as r2i
+		          WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?)) as r2i
 			 ON ingredient.id = r2i.ingredient_id`,
-		strings.ToLower(name),
-		LowerVariant(variant),
+		name,
+		variant,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -154,8 +154,6 @@ func (c *Client) DeleteRecipeToIngredient(ctx context.Context, params DeleteReci
 	if params.Ingredient == "" {
 		return ErrInvalidIngredient
 	}
-
-	params.RecipeVariant = LowerVariant(params.RecipeVariant)
 
 	result, err := c.conn.NamedExecContext(
 		ctx,

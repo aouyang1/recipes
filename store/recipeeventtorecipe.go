@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"recipes/store/models"
 )
@@ -107,8 +106,8 @@ func (c *Client) GetRecipeRecipeEvents(ctx context.Context, name, variant string
 				  WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?)) as re2r
 			 ON recipe_event.id = re2r.recipe_event_id
 	   ORDER BY schedule_date DESC`,
-		strings.ToLower(name),
-		LowerVariant(variant),
+		name,
+		variant,
 	)
 	if err != nil {
 		return nil, err
@@ -152,8 +151,6 @@ func (c *Client) DeleteRecipeEventToRecipe(ctx context.Context, params DeleteRec
 	if params.RecipeName == "" {
 		return ErrInvalidRecipe
 	}
-
-	params.RecipeVariant = LowerVariant(params.RecipeVariant)
 
 	result, err := c.conn.NamedExecContext(
 		ctx,

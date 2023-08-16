@@ -35,14 +35,14 @@ function getRecipesByRecipeEventID(recipe_event_id) {
         .get(function(error, data) {
             if (error) throw error;
             recipes = JSON.parse(data.response);
-            recipes = [{name: "blargh"}, {name: "foo"}]
+
             list = d3.select("#list-sub-items");
             list.selectAll("*").remove();
 
             /*
             <div class="btn-group">
               <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
-                Create
+                New/Link 
               </button>
               <div class="dropdown-menu">
                 <form class="px-4 py-3">
@@ -68,7 +68,7 @@ function getRecipesByRecipeEventID(recipe_event_id) {
                     .attr("class", "btn btn-secondary btn-sm dropdown-toggle")
                     .attr("type", "button")
                     .attr("data-bs-toggle", "dropdown")
-                    .text("New Recipe");
+                    .text("New/Link Recipe");
  
             btnForm = btnGroup
                 .append("div")
@@ -97,33 +97,139 @@ function getRecipesByRecipeEventID(recipe_event_id) {
             btnForm
                 .append("button")
                     .attr("type", "submit")
-                    .attr("class", "btn btn-primary")
+                    .attr("class", "btn btn-primary py-2")
                     .text("Create")
                 .on("click", (_, d) => {
                     console.log(d);
                     // if successful creation of recipe to event append to recipes
                     // variable and focus on the newly created one
+                    recipe_name = d3.select("#dropdownFormName").property('value');
+                    recipe_variant = d3.select("#dropdownFormLink").property('value'); 
+                    CreateLinkEventToRecipe(d, recipe_name, recipe_variant)
                 });
 
-            /*
-            <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
-                <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
-            </a>
-            */
-            list.selectAll("a")
-                .data(recipes)
-                .enter()
-                .append("a")
-                    .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
-                    .attr("id", d => d.name + ":" + d.variant)
-                    .attr("data-bs-toggle", "list")
-                    .on("click", (_, d) => {
-                        console.log(d);
-                    })
-                .append("d")
-                    .attr("class", "col-10 mb-1 small")
-                    .text(d => d.name);
+            AppendSubList(recipes);
         })
+}
+
+function CreateLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
+    req = {
+        "recipe_event_id": recipe_event_id,
+        "recipe": {
+            "name": recipe_name,
+            "variant": recipe_variant,
+        },
+    };
+
+    d3.request("/recipe")
+        .post(JSON.stringify(req), function(error, data) {
+            if (error) {
+                console.log(error);
+                return
+            }
+            recipe = JSON.parse(data.response); 
+            AppendSubList([recipe])
+        });
+}
+
+function AppendSubList(items) {
+    /*
+    <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
+        <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
+    </a>
+    */
+
+    list = d3.select("#list-sub-items");
+    list.selectAll("a")
+        .data(items)
+        .enter()
+        .append("a")
+            .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
+            .attr("id", d => d.name + ":" + d.variant)
+            .attr("data-bs-toggle", "list")
+            .on("click", (_, d) => {
+                d3.select("#title-sub-item")
+                    .html(_ => {
+                        return "<div>" + d.name + "</div>" + "<a target=\"_blank\" href=\"" + d.variant + "\">" + d.variant + "</a>"
+                    });
+
+                tags = ["tofu", "vegetarian", "burger"]
+
+                /*
+                <span class="badge badge-pill badge-info">Info</span>
+                */
+                badges = d3.select("#badges-recipe-tags");
+                badges.selectAll("div")
+                    .data(tags)
+                    .enter()
+                    .append("a")
+                        .attr("class", "p-1")
+                    .append("span")
+                        .attr("class", "badge rounded-pill bg-info text-dark")
+                        .text(d => d);
+
+                badges.selectAll("div")
+                    .data(["add icon"])
+                    .enter()
+                    .append("a")
+                        .attr("class", "p-1")
+                    .append("span")
+                        .attr("class", "badge rounded-pill bg-primary")
+                        .text("+")
+                    .on("click", (i, d) => {
+                        // create tag
+                        console.log("adding tag");
+                    });
+
+                ingredients = [
+                    {name: "firm tofu", quantity: "1", size: "lg", unit: null},
+                    {name: "salt", quantity: "1/4", size: null, unit: "tsp."},
+                    {name: "pepper", quantity: "1/4", size: null, unit: "tsp."},
+                ]
+                /*
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">First</th>
+                      <th scope="col">Last</th>
+                      <th scope="col">Handle</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">1</th>
+                      <td>Mark</td>
+                      <td>Otto</td>
+                      <td>@mdo</td>
+                    </tr>
+                  </tbody>
+                </table>
+                */
+                tablediv = d3.select("#table-recipe-ingredients");
+                tbl = tablediv.append("table")
+                    .attr("class", "table table-sm");
+
+                tbl.append("thead")
+                    .append("tr")
+                    .selectAll("th")
+                    .data(["Quantity", "Name"])
+                    .enter()
+                    .append("th")
+                        .attr("class", "col")
+                        .text(d => d);
+
+                tbl.append("tbody")
+                    .selectAll("tr")
+                    .data(ingredients)
+                    .enter()
+                    .append("td")
+                        .text(d => d.name);
+
+            })
+        .append("d")
+            .attr("class", "col-10 mb-1 small")
+            .text(d => d.name);
 }
 
 getRecipeEvents();

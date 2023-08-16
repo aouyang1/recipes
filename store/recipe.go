@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"net/url"
-	"strings"
 
 	"recipes/store/models"
 )
@@ -42,8 +40,8 @@ func (c *Client) ExistsRecipe(ctx context.Context, name, variant string) (uint64
 	row := c.conn.QueryRowxContext(
 		ctx,
 		`SELECT id FROM recipe WHERE name = ? AND variant = ?`,
-		strings.ToLower(name),
-		LowerVariant(variant),
+		name,
+		variant,
 	)
 	if err := row.Scan(&recipeID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -53,15 +51,4 @@ func (c *Client) ExistsRecipe(ctx context.Context, name, variant string) (uint64
 	}
 
 	return recipeID, nil
-}
-
-func LowerVariant(variant string) string {
-	u, err := url.Parse(variant)
-	if err != nil {
-		return variant
-	}
-	if u.Host == "" {
-		return strings.ToLower(variant)
-	}
-	return variant
 }
