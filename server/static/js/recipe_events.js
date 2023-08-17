@@ -147,67 +147,87 @@ function AppendSubList(items) {
             .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
             .attr("id", d => d.name + ":" + d.variant)
             .attr("data-bs-toggle", "list")
-            .on("click", (_, d) => {
+            .on("click", (_, recipe) => {
+                console.log(recipe);
                 d3.select("#title-sub-item")
                     .html(_ => {
-                        return "<div>" + d.name + "</div>" + "<a target=\"_blank\" href=\"" + d.variant + "\">" + d.variant + "</a>"
+                        return "<div>" + recipe.name + "</div>" + "<a target=\"_blank\" href=\"" + recipe.variant + "\">" + recipe.variant + "</a>"
                     });
 
-                tags = ["tofu", "vegetarian", "burger"]
+                // dummy tags
+                recipe.tags = ["tofu", "vegetarian", "burger"]
+
+                badges = d3.select("#badges-recipe-tags");
+                /*
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">@</span>
+                  </div>
+                  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                </div>
+                */
+                tagInput = badges.append("div")
+                    .attr("class", "col-6 input-group input-group-sm p-2");
+
+                tagInput.append("div")
+                        .attr("class", "input-group-prepend")
+                    .append("span")
+                        .attr("class", "input-group-text")
+                        .text("Tags");
+                tagInput.append("input")
+                    .attr("class", "form-control")
+                    .attr("type", "text");
 
                 /*
                 <span class="badge badge-pill badge-info">Info</span>
                 */
-                badges = d3.select("#badges-recipe-tags");
-                badges.selectAll("div")
-                    .data(tags)
+                badges.selectAll("a")
+                    .data(recipe.tags)
                     .enter()
                     .append("a")
                         .attr("class", "p-1")
+                        .attr("id", d => "badge-" + d)
                     .append("span")
                         .attr("class", "badge rounded-pill bg-info text-dark")
-                        .text(d => d);
-
-                badges.selectAll("div")
-                    .data(["add icon"])
-                    .enter()
-                    .append("a")
-                        .attr("class", "p-1")
-                    .append("span")
-                        .attr("class", "badge rounded-pill bg-primary")
-                        .text("+")
-                    .on("click", (i, d) => {
-                        // create tag
-                        console.log("adding tag");
-                    });
+                        .text(d => d)
+                    .append("i")
+                        .attr("class", "icon-remove px-1")
+                        .attr("style", "color:red")
+                        .on("click", (i, d) => {
+                            d3.select("#badge-"+d).remove();
+                            idx = recipe.tags.indexOf(d);
+                            recipe.tags.splice(idx, 1);
+                            console.log(recipe);
+                        });
 
                 ingredients = [
                     {name: "firm tofu", quantity: "1", size: "lg", unit: null},
                     {name: "salt", quantity: "1/4", size: null, unit: "tsp."},
                     {name: "pepper", quantity: "1/4", size: null, unit: "tsp."},
                 ]
+
+                table = d3.select("#table-recipe-ingredients");
                 /*
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">First</th>
-                      <th scope="col">Last</th>
-                      <th scope="col">Handle</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>Mark</td>
-                      <td>Otto</td>
-                      <td>@mdo</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">@</span>
+                  </div>
+                  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                </div>
                 */
-                tablediv = d3.select("#table-recipe-ingredients");
-                tbl = tablediv.append("table")
+                ingInput = table.append("div")
+                    .attr("class", "col-6 input-group input-group-sm px-2 pb-2 pt-5");
+
+                ingInput.append("div")
+                        .attr("class", "input-group-prepend")
+                    .append("span")
+                        .attr("class", "input-group-text")
+                        .text("Ingredients");
+                ingInput.append("input")
+                    .attr("class", "form-control")
+                    .attr("type", "text");
+
+                tbl = table.append("table")
                     .attr("class", "table table-sm");
 
                 tbl.append("thead")
