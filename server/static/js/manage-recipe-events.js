@@ -1,7 +1,3 @@
-store = {
-    listSubItems: null, // list of sub items to render and update
-}
-
 function getRecipeEvents() {
     d3.request("/recipe_events")
         .get(function(error, data) {
@@ -9,6 +5,8 @@ function getRecipeEvents() {
             recipe_events = JSON.parse(data.response);
             list = d3.select("#list-items");
             clearListItems()
+            clearRecipeUpdate();
+            clearListSubItems();
 
             /*
             <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
@@ -32,7 +30,6 @@ function getRecipeEvents() {
                     .text(d => d.title);
         })
 }
-
 
 function getRecipesByRecipeEventID(recipe_event_id) {
     req = {"recipe_event_id": recipe_event_id};
@@ -298,20 +295,3 @@ function renderRecipeUpdateIngredients(recipe) {
         .attr("class", "form-control")
         .attr("type", "text");
 }
-
-function clearListItems() {
-    d3.select("#list-items").selectAll("*").remove();
-}
-
-function clearListSubItems() {
-    d3.select("#list-sub-items").selectAll("*").remove();
-}
-
-function clearRecipeUpdate() {
-    d3.select("#title-sub-item").selectAll("*").remove();
-    d3.select("#badges-recipe-tags").selectAll("*").remove();
-    d3.select("#table-recipe-ingredients").selectAll("*").remove();
-    d3.select("#button-save-recipe").selectAll("*").remove();
-}
-
-getRecipeEvents();
