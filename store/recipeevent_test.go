@@ -62,9 +62,8 @@ func TestInsertRecipeEventContext(t *testing.T) {
 				assert.Nil(t, td.err)
 			}
 
-			exists, err := client.ExistsRecipeEvent(context.Background(), td.recipeEvent[len(td.recipeEvent)-1].ID)
+			_, err := client.ExistsRecipeEvent(context.Background(), td.recipeEvent[len(td.recipeEvent)-1].ID)
 			require.Nil(t, err)
-			assert.True(t, exists)
 		})
 	}
 }

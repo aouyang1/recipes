@@ -11,21 +11,19 @@ var (
 	ErrRecipeToTagNotFound = errors.New("recipe to tag not found")
 )
 
-func (c *Client) UpsertRecipeToTag(ctx context.Context, recipeName, recipeVariant, tag string) error {
-	if recipeName == "" {
+func (c *Client) UpsertRecipeToTag(ctx context.Context, recipeID uint64, tagID uint64) error {
+	if recipeID == 0 {
 		return ErrInvalidRecipe
 	}
-	if tag == "" {
+	if tagID == 0 {
 		return ErrInvalidTag
 	}
 
-	recipeID, err := c.ExistsRecipe(ctx, recipeName, recipeVariant)
-	if err != nil {
+	if _, err := c.ExistsRecipe(ctx, recipeID); err != nil {
 		return err
 	}
 
-	tagID, err := c.ExistsTag(ctx, tag)
-	if err != nil {
+	if _, err := c.ExistsTag(ctx, tagID); err != nil {
 		return err
 	}
 
@@ -34,7 +32,7 @@ func (c *Client) UpsertRecipeToTag(ctx context.Context, recipeName, recipeVarian
 		TagID:    tagID,
 	}
 
-	_, err = c.conn.NamedExecContext(
+	_, err := c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO recipe_to_tag (recipe_id, tag_id)
 			  VALUES (:recipe_id, :tag_id)

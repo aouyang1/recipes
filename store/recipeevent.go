@@ -27,24 +27,23 @@ func (c *Client) UpsertRecipeEvent(ctx context.Context, recipeEvent *models.Reci
 	return err
 }
 
-func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEventID string) (bool, error) {
+func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEventID string) (string, error) {
 	if recipeEventID == "" {
-		return false, ErrNilRecipeEvent
+		return "", ErrNilRecipeEvent
 	}
 
-	var cnt int
 	err := c.conn.QueryRowxContext(
 		ctx,
-		`SELECT COUNT(id) FROM recipe_event WHERE id = ?`,
+		`SELECT id FROM recipe_event WHERE id = ?`,
 		recipeEventID,
-	).Scan(&cnt)
+	).Scan(&recipeEventID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, ErrRecipeEventNotFound
+			return "", ErrRecipeEventNotFound
 		}
-		return false, err
+		return "", err
 	}
-	return cnt > 0, nil
+	return recipeEventID, nil
 }
 
 func (c *Client) GetRecipeEvents(ctx context.Context) ([]*models.RecipeEvent, error) {

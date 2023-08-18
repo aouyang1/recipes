@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 
 	"recipes/store/models"
 )
@@ -49,16 +48,15 @@ func (c *Client) UpsertTag(ctx context.Context, tag *models.Tag) (uint64, error)
 	return tag.ID, nil
 }
 
-func (c *Client) ExistsTag(ctx context.Context, name string) (uint64, error) {
-	if name == "" {
+func (c *Client) ExistsTag(ctx context.Context, tagID uint64) (uint64, error) {
+	if tagID == 0 {
 		return 0, ErrInvalidTag
 	}
 
-	var tagID uint64
 	row := c.conn.QueryRowxContext(
 		ctx,
-		`SELECT id FROM tag WHERE name = ?`,
-		strings.ToLower(name),
+		`SELECT id FROM tag WHERE id = ?`,
+		tagID,
 	)
 	if err := row.Scan(&tagID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

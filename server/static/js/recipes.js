@@ -1,4 +1,5 @@
 store = {
+    listItems: null, // list of items to render
     listSubItems: null, // list of sub items to render and update
 }
 

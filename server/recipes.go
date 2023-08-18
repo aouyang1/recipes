@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"strconv"
 	"time"
 
 	"recipes/models"
@@ -18,12 +20,30 @@ var (
 func (s *Server) GetRecipes(c *gin.Context) {
 	query := c.Query("query")
 	recipeEventID := c.Query("recipe_event_id")
-	ingredient := c.Query("ingredient")
-	tag := c.Query("tag")
+
+	var ingredientID uint64
+	if ingredientIDstr := c.Query("ingredient_id"); ingredientIDstr != "" {
+		var err error
+		ingredientID, err = strconv.ParseUint(c.Query("ingredient_id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	var tagID uint64
+	if tagIDstr := c.Query("tag_id"); tagIDstr != "" {
+		var err error
+		tagID, err = strconv.ParseUint(c.Query("tag_id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), GetRecipesTimeout)
 	defer cancel()
-	recipes, err := s.getRecipes(ctx, query, recipeEventID, ingredient, tag)
+	recipes, err := s.getRecipes(ctx, query, recipeEventID, ingredientID, tagID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -31,15 +51,15 @@ func (s *Server) GetRecipes(c *gin.Context) {
 	c.JSON(200, recipes)
 }
 
-func (s *Server) getRecipes(ctx context.Context, query, recipeEventID, ingredient, tag string) ([]*models.Recipe, error) {
+func (s *Server) getRecipes(ctx context.Context, query, recipeEventID string, ingredientID, tagID uint64) ([]*models.Recipe, error) {
 	if recipeEventID != "" {
 		return s.getRecipesByRecipeEventID(ctx, recipeEventID)
 	}
-	if ingredient != "" {
-		return s.getRecipesByIngredient(ctx, ingredient)
+	if ingredientID != 0 {
+		return s.getRecipesByIngredient(ctx, ingredientID)
 	}
-	if tag != "" {
-		return s.getRecipesByTag(ctx, tag)
+	if tagID != 0 {
+		return s.getRecipesByTag(ctx, tagID)
 	}
 	if query != "" {
 		return s.getRecipesByQuery(ctx, query)
@@ -61,9 +81,8 @@ func (s *Server) getRecipesByRecipeEventID(ctx context.Context, recipeEventID st
 	return s.storeRecipesToAPI(ctx, storeRecipes)
 }
 
-func (s *Server) getRecipesByIngredient(ctx context.Context, ingredient string) ([]*models.Recipe, error) {
-	ingredientID, err := s.store.ExistsIngredient(ctx, ingredient)
-	if err != nil {
+func (s *Server) getRecipesByIngredient(ctx context.Context, ingredientID uint64) ([]*models.Recipe, error) {
+	if _, err := s.store.ExistsIngredient(ctx, ingredientID); err != nil {
 		return nil, err
 	}
 	storeRecipes, err := s.store.GetIngredientRecipes(ctx, ingredientID)
@@ -74,9 +93,8 @@ func (s *Server) getRecipesByIngredient(ctx context.Context, ingredient string) 
 	return s.storeRecipesToAPI(ctx, storeRecipes)
 }
 
-func (s *Server) getRecipesByTag(ctx context.Context, tag string) ([]*models.Recipe, error) {
-	tagID, err := s.store.ExistsTag(ctx, tag)
-	if err != nil {
+func (s *Server) getRecipesByTag(ctx context.Context, tagID uint64) ([]*models.Recipe, error) {
+	if _, err := s.store.ExistsTag(ctx, tagID); err != nil {
 		return nil, err
 	}
 	storeRecipes, err := s.store.GetTagRecipes(ctx, tagID)

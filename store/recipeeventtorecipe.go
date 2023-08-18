@@ -21,12 +21,13 @@ func (c *Client) UpsertRecipeEventToRecipe(ctx context.Context, recipeEventID st
 		return ErrInvalidRecipe
 	}
 
-	exists, err := c.ExistsRecipeEvent(ctx, recipeEventID)
+	_, err := c.ExistsRecipeEvent(ctx, recipeEventID)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return ErrRecipeEventNotFound
+
+	if _, err := c.ExistsRecipe(ctx, recipeID); err != nil {
+		return err
 	}
 
 	re2r := models.RecipeEventToRecipe{

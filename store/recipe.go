@@ -48,17 +48,15 @@ func (c *Client) UpsertRecipe(ctx context.Context, recipe *models.Recipe) (uint6
 
 }
 
-func (c *Client) ExistsRecipe(ctx context.Context, name, variant string) (uint64, error) {
-	if name == "" {
+func (c *Client) ExistsRecipe(ctx context.Context, recipeID uint64) (uint64, error) {
+	if recipeID == 0 {
 		return 0, ErrInvalidRecipe
 	}
 
-	var recipeID uint64
 	row := c.conn.QueryRowxContext(
 		ctx,
-		`SELECT id FROM recipe WHERE name = ? AND variant = ?`,
-		name,
-		variant,
+		`SELECT id FROM recipe WHERE id = ?`,
+		recipeID,
 	)
 	if err := row.Scan(&recipeID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

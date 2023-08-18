@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"recipes/store/models"
-	"strings"
 )
 
 var (
@@ -48,16 +47,15 @@ func (c *Client) UpsertIngredient(ctx context.Context, ingredient *models.Ingred
 	return ingredient.ID, nil
 }
 
-func (c *Client) ExistsIngredient(ctx context.Context, name string) (uint64, error) {
-	if name == "" {
+func (c *Client) ExistsIngredient(ctx context.Context, ingredientID uint64) (uint64, error) {
+	if ingredientID == 0 {
 		return 0, ErrInvalidIngredient
 	}
 
-	var ingredientID uint64
 	row := c.conn.QueryRowxContext(
 		ctx,
-		`SELECT id FROM ingredient WHERE name = ?`,
-		strings.ToLower(name),
+		`SELECT id FROM ingredient WHERE id = ?`,
+		ingredientID,
 	)
 	if err := row.Scan(&ingredientID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

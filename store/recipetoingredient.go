@@ -11,29 +11,26 @@ var (
 	ErrRecipeToIngredientNotFound = errors.New("recipe to ingredient not found")
 )
 
-func (c *Client) UpsertRecipeToIngredient(ctx context.Context, recipeName, recipeVariant, ingredientName string, r2i models.RecipeToIngredient) error {
-	if recipeName == "" {
+func (c *Client) UpsertRecipeToIngredient(ctx context.Context, r2i *models.RecipeToIngredient) error {
+	if r2i == nil {
+		return nil
+	}
+	if r2i.RecipeID == 0 {
 		return ErrInvalidRecipe
 	}
-	if ingredientName == "" {
+	if r2i.IngredientID == 0 {
 		return ErrInvalidIngredient
 	}
 
-	recipeID, err := c.ExistsRecipe(ctx, recipeName, recipeVariant)
-	if err != nil {
+	if _, err := c.ExistsRecipe(ctx, r2i.RecipeID); err != nil {
 		return err
 	}
 
-	ingredientID, err := c.ExistsIngredient(ctx, ingredientName)
-	if err != nil {
+	if _, err := c.ExistsIngredient(ctx, r2i.IngredientID); err != nil {
 		return err
 	}
 
-	// override existing recipe id and ingredient id
-	r2i.RecipeID = recipeID
-	r2i.IngredientID = ingredientID
-
-	_, err = c.conn.NamedExecContext(
+	_, err := c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO recipe_to_ingredient (recipe_id, ingredient_id, quantity, unit, size)
 			  VALUES (:recipe_id, :ingredient_id, :quantity, :unit, :size)

@@ -46,12 +46,6 @@ func NewServer() (*Server, error) {
 	router.POST("/recipe", s.PostRecipe)
 	router.PUT("/recipe", s.UpdateRecipe)
 
-	router.POST("/recipe_tag", s.PostRecipeTag)
-	router.DELETE("/recipe_tag", s.DeleteRecipeTag)
-
-	router.POST("/recipe_ingredient", s.PostRecipeIngredient)
-	router.DELETE("/recipe_ingredient", s.DeleteRecipeIngredient)
-
 	router.GET("/tags", s.GetTags)
 	router.POST("/tag", s.PostTag)
 	router.DELETE("/tag", s.DeleteTag)

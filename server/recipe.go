@@ -99,6 +99,27 @@ func (s *Server) updateRecipe(ctx context.Context, req *models.Recipe) error {
 		CreatedOn: time.Now().UTC().Unix(),
 	}
 
-	_, err := s.store.UpsertRecipe(ctx, r)
-	return err
+	if _, err := s.store.UpsertRecipe(ctx, r); err != nil {
+		return err
+	}
+
+	for _, tag := range req.Tags {
+		if err := s.store.UpsertRecipeToTag(ctx, r.ID, tag.ID); err != nil {
+			return err
+		}
+	}
+
+	for _, ingredient := range req.Ingredients {
+		r2i := &storemodels.RecipeToIngredient{
+			RecipeID:     r.ID,
+			IngredientID: ingredient.ID,
+			Quantity:     ingredient.Quantity,
+			Unit:         string(ingredient.Unit),
+			Size:         string(ingredient.Size),
+		}
+		if err := s.store.UpsertRecipeToIngredient(ctx, r2i); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -91,7 +91,7 @@ function renderNewLinkRecipeButton(recipe_event_id) {
         .append("input")
             .attr("type", "text")
             .attr("class", "form-control")
-            .attr("id", "dropdownFormName")
+            .attr("id", "dropdownFormRecipeName")
             .attr("placeholder", "recipe name");
 
     btnForm
@@ -100,7 +100,7 @@ function renderNewLinkRecipeButton(recipe_event_id) {
         .append("input")
             .attr("type", "text")
             .attr("class", "form-control")
-            .attr("id", "dropdownFormLink")
+            .attr("id", "dropdownFormRecipeLink")
             .attr("placeholder", "https://recipelink.com");
 
     btnForm
@@ -111,8 +111,8 @@ function renderNewLinkRecipeButton(recipe_event_id) {
         .on("click", (_, d) => {
             // if successful creation of recipe to event append to recipes
             // variable and focus on the newly created one
-            recipe_name = d3.select("#dropdownFormName").property('value');
-            recipe_variant = d3.select("#dropdownFormLink").property('value'); 
+            recipe_name = d3.select("#dropdownFormRecipeName").property('value');
+            recipe_variant = d3.select("#dropdownFormRecipeLink").property('value'); 
             createLinkEventToRecipe(d, recipe_name, recipe_variant)
         });
 }
@@ -161,8 +161,7 @@ function renderSubList() {
             .on("click", (_, recipe) => {
                 clearRecipeUpdate();
                 renderRecipeUpdateTitle(recipe);
-                renderRecipeUpdateTags(recipe);
-                renderRecipeUpdateIngredients(recipe);
+                renderRecipeTagDropdown(recipe);
 
                 /*
                 <button type="button" class="btn btn-primary btn-sm">Small button</button>
@@ -229,45 +228,74 @@ function renderRecipeUpdateTitle(recipe) {
         });
 }
 
+function renderRecipeTagDropdown(recipe) {
+    d3.request("/tags")
+        .get(function(error, data) {
+            if (error) throw error;
+            tags = JSON.parse(data.response);
+            if (tags) {
+                badges = d3.select("#badges-recipe-tags");
+
+                tagInput = badges.append("div")
+                    .attr("class", "col-6 input-group input-group-sm p-2");
+
+                tagInput.append("button")
+                    .attr("id", "input-update-tag")
+                    .attr("class", "form-control dropdown-toggle")
+                    .attr("type", "button")
+                    .attr("data-bs-toggle", "dropdown")
+                    .attr("aria-haspopup", "true")
+                    .attr("aria-expanded", "false")
+                    .text("Tags");
+
+                tagInput.append("div")
+                    .attr("class", "dropdown-menu")
+                    .attr("aria-labelledby", "input-update-tag")
+                    .selectAll("a")
+                    .data(tags)
+                    .enter()
+                    .append("a")
+                        .attr("class", "dropdown-item")
+                        .text(d => d.name)
+                        .on("click", function(_, d) {
+                            console.log(d);
+                            if (recipe.tags.indexOf(d) < 0) {
+                                recipe.tags.push(d);
+                                renderRecipeUpdateTags(recipe);
+                            }
+                        });
+            }
+
+            renderRecipeUpdateTags(recipe);
+            renderRecipeUpdateIngredients(recipe);
+        })
+}
+
 function renderRecipeUpdateTags(recipe) {
     badges = d3.select("#badges-recipe-tags");
-    /*
-    <div class="input-group mb-3">
-      <div class="input-group-prepend">
-        <span class="input-group-text" id="basic-addon1">@</span>
-      </div>
-      <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-    </div>
-    */
-    tagInput = badges.append("div")
-        .attr("class", "col-6 input-group input-group-sm p-2");
+    badges.selectAll("#badge-collection").remove();
+    tags = badges.append("div")
+        .attr("id", "badge-collection");
 
-    tagInput.append("div")
-            .attr("class", "input-group-prepend")
-        .append("span")
-            .attr("class", "input-group-text")
-            .text("Tags");
-    tagInput.append("input")
-        .attr("class", "form-control")
-        .attr("type", "text");
-
+    console.log(recipe.tags)
     /*
     <span class="badge badge-pill badge-info">Info</span>
     */
-    badges.selectAll("a")
+    tags.selectAll("a")
         .data(recipe.tags)
         .enter()
         .append("a")
             .attr("class", "p-1")
-            .attr("id", d => "badge-" + d)
+            .attr("id", d => "badge-" + d.name)
         .append("span")
             .attr("class", "badge rounded-pill bg-info text-dark")
-            .text(d => d)
+            .text(d => d.name)
         .append("i")
             .attr("class", "icon-remove px-1")
             .attr("style", "color:red")
             .on("click", (_, d) => {
-                d3.select("#badge-"+d).remove();
+                console.log(d);
+                d3.select("#badge-"+d.name).remove();
                 idx = recipe.tags.indexOf(d);
                 recipe.tags.splice(idx, 1);
             });
