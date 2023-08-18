@@ -1,10 +1,14 @@
+store = {
+    listSubItems: null, // list of sub items to render and update
+}
+
 function getRecipeEvents() {
     d3.request("/recipe_events")
         .get(function(error, data) {
             if (error) throw error;
             recipe_events = JSON.parse(data.response);
             list = d3.select("#list-items");
-            list.selectAll("*").remove();
+            clearListItems()
 
             /*
             <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
@@ -19,6 +23,8 @@ function getRecipeEvents() {
                     .attr("id", d => d.id)
                     .attr("data-bs-toggle", "list")
                     .on("click", (_, d) => {
+                        clearRecipeUpdate();
+                        clearListSubItems();
                         getRecipesByRecipeEventID(d.id);
                     })
                 .append("d")
@@ -35,82 +41,83 @@ function getRecipesByRecipeEventID(recipe_event_id) {
         .get(function(error, data) {
             if (error) throw error;
             recipes = JSON.parse(data.response);
-            console.log(recipes);
+            store.listSubItems = recipes;
 
-            list = d3.select("#list-sub-items");
-            list.selectAll("*").remove();
-
-            /*
-            <div class="btn-group">
-              <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
-                New/Link 
-              </button>
-              <div class="dropdown-menu">
-                <form class="px-4 py-3">
-                  <div class="form-group">
-                    <input type="text" class="form-control" id="dropdownFormName" placeholder="recipe name">
-                  </div>
-                  <div class="form-group">
-                    <input type="text" class="form-control" id="dropdownFormLink" placeholder="https://recipelink.com">
-                  </div>
-                  <button type="submit" class="btn btn-primary">Create</button>
-                </form>
-              </div>
-            </div>
-            */
-            btnGroup = list.selectAll("div")
-                .data([recipe_event_id])
-                .enter()
-                .append("div")
-                    .attr("class", "btn-group p-4");
-
-            btnGroup
-                .append("button")
-                    .attr("class", "btn btn-secondary btn-sm dropdown-toggle")
-                    .attr("type", "button")
-                    .attr("data-bs-toggle", "dropdown")
-                    .text("New/Link Recipe");
- 
-            btnForm = btnGroup
-                .append("div")
-                    .attr("class", "dropdown-menu")
-                .append("form")
-                    .attr("class", "px-1");
-
-            btnForm
-                .append("div")
-                    .attr("class", "form-group py-1")
-                .append("input")
-                    .attr("type", "text")
-                    .attr("class", "form-control")
-                    .attr("id", "dropdownFormName")
-                    .attr("placeholder", "recipe name");
-
-            btnForm
-                .append("div")
-                    .attr("class", "form-group py-1")
-                .append("input")
-                    .attr("type", "text")
-                    .attr("class", "form-control")
-                    .attr("id", "dropdownFormLink")
-                    .attr("placeholder", "https://recipelink.com");
-
-            btnForm
-                .append("button")
-                    .attr("type", "submit")
-                    .attr("class", "btn btn-primary py-2")
-                    .text("Create")
-                .on("click", (_, d) => {
-                    console.log(d);
-                    // if successful creation of recipe to event append to recipes
-                    // variable and focus on the newly created one
-                    recipe_name = d3.select("#dropdownFormName").property('value');
-                    recipe_variant = d3.select("#dropdownFormLink").property('value'); 
-                    CreateLinkEventToRecipe(d, recipe_name, recipe_variant)
-                });
-
-            AppendSubList(recipes);
+            RenderNewLinkRecipeButton(recipe_event_id);
+            RenderSubList();
         })
+}
+
+function RenderNewLinkRecipeButton(recipe_event_id) {
+    /*
+    <div class="btn-group">
+      <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
+        New/Link 
+      </button>
+      <div class="dropdown-menu">
+        <form class="px-4 py-3">
+          <div class="form-group">
+            <input type="text" class="form-control" id="dropdownFormName" placeholder="recipe name">
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="dropdownFormLink" placeholder="https://recipelink.com">
+          </div>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+      </div>
+    </div>
+    */
+    list = d3.select("#list-sub-items");
+
+    btnGroup = list.selectAll("div")
+        .data([recipe_event_id])
+        .enter()
+        .append("div")
+            .attr("class", "btn-group p-4");
+
+    btnGroup
+        .append("button")
+            .attr("class", "btn btn-secondary btn-sm dropdown-toggle")
+            .attr("type", "button")
+            .attr("data-bs-toggle", "dropdown")
+            .text("New/Link Recipe");
+
+    btnForm = btnGroup
+        .append("div")
+            .attr("class", "dropdown-menu")
+        .append("form")
+            .attr("class", "px-1");
+
+    btnForm
+        .append("div")
+            .attr("class", "form-group py-1")
+        .append("input")
+            .attr("type", "text")
+            .attr("class", "form-control")
+            .attr("id", "dropdownFormName")
+            .attr("placeholder", "recipe name");
+
+    btnForm
+        .append("div")
+            .attr("class", "form-group py-1")
+        .append("input")
+            .attr("type", "text")
+            .attr("class", "form-control")
+            .attr("id", "dropdownFormLink")
+            .attr("placeholder", "https://recipelink.com");
+
+    btnForm
+        .append("button")
+            .attr("type", "button")
+            .attr("class", "btn btn-primary py-2")
+            .text("Create")
+        .on("click", (_, d) => {
+            // if successful creation of recipe to event append to recipes
+            // variable and focus on the newly created one
+            recipe_name = d3.select("#dropdownFormName").property('value');
+            recipe_variant = d3.select("#dropdownFormLink").property('value'); 
+            CreateLinkEventToRecipe(d, recipe_name, recipe_variant)
+        });
 }
 
 function CreateLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
@@ -128,13 +135,15 @@ function CreateLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
                 console.log(error);
                 return
             }
-            recipe = JSON.parse(data.response); 
-            console.log(recipe);
-            AppendSubList([recipe])
+            if (data.response) {
+                recipe = JSON.parse(data.response); 
+                store.listSubItems.push(recipe);
+                RenderSubList();
+            }
         });
 }
 
-function AppendSubList(items) {
+function RenderSubList() {
     /*
     <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
         <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
@@ -142,15 +151,17 @@ function AppendSubList(items) {
     */
 
     list = d3.select("#list-sub-items");
+    list.selectAll("a").remove();
+
+    console.log(store.listSubItems);
     list.selectAll("a")
-        .data(items)
+        .data(store.listSubItems)
         .enter()
         .append("a")
             .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
             .attr("id", d => d.name + ":" + d.variant)
             .attr("data-bs-toggle", "list")
             .on("click", (_, recipe) => {
-                console.log(recipe);
                 title = d3.select("#title-sub-item")
                     .append("div")
                         .attr("class", "border-bottom");
@@ -169,7 +180,6 @@ function AppendSubList(items) {
                     .property("value", recipe.name)
                     .on('change', function() {
                         recipe.name = d3.select(this).property('value');
-                        console.log(recipe);
                     });
 
                 variantInput = title.append("div")
@@ -186,7 +196,6 @@ function AppendSubList(items) {
                     .property("value", recipe.variant)
                     .on('change', function() {
                         recipe.variant = d3.select(this).property('value');
-                        console.log(recipe);
                     });
 
                 badges = d3.select("#badges-recipe-tags");
@@ -229,7 +238,6 @@ function AppendSubList(items) {
                             d3.select("#badge-"+d).remove();
                             idx = recipe.tags.indexOf(d);
                             recipe.tags.splice(idx, 1);
-                            console.log(recipe);
                         });
 
 
@@ -265,7 +273,6 @@ function AppendSubList(items) {
                     .attr("class", "btn btn-primary btn-sm")
                     .text("Save")
                     .on("click", (_, d) => {
-                        console.log("saving");
                         d3.request("/recipe")
                             .send("PUT", JSON.stringify(recipe), function(error, data) {
                                 if (error) {
@@ -280,6 +287,21 @@ function AppendSubList(items) {
         .append("d")
             .attr("class", "col-10 mb-1 small")
             .text(d => d.name);
+}
+
+function clearListItems() {
+    d3.select("#list-items").selectAll("*").remove();
+}
+
+function clearListSubItems() {
+    d3.select("#list-sub-items").selectAll("*").remove();
+}
+
+function clearRecipeUpdate() {
+    d3.select("#title-sub-item").selectAll("*").remove();
+    d3.select("#badges-recipe-tags").selectAll("*").remove();
+    d3.select("#table-recipe-ingredients").selectAll("*").remove();
+    d3.select("#button-save-recipe").selectAll("*").remove();
 }
 
 getRecipeEvents();

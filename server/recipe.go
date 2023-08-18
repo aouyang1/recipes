@@ -32,20 +32,21 @@ func (s *Server) PostRecipe(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), GetRecipeTimeout)
 	defer cancel()
-	if err := s.postRecipe(ctx, &req); err != nil {
+	recipe, err := s.postRecipe(ctx, &req)
+	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusCreated)
+	c.JSON(http.StatusCreated, recipe)
 }
 
-func (s *Server) postRecipe(ctx context.Context, req *PostRecipeRequest) error {
+func (s *Server) postRecipe(ctx context.Context, req *PostRecipeRequest) (*models.Recipe, error) {
 	if req == nil || req.Recipe == nil {
-		return nil
+		return nil, nil
 	}
 
 	if req.Recipe.Name == "" && req.Recipe.Variant == "" {
-		return nil
+		return nil, nil
 	}
 
 	r := &storemodels.Recipe{
@@ -56,10 +57,20 @@ func (s *Server) postRecipe(ctx context.Context, req *PostRecipeRequest) error {
 
 	recipeID, err := s.store.UpsertRecipe(ctx, r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.store.UpsertRecipeEventToRecipe(ctx, req.EventID, recipeID)
+	if err := s.store.UpsertRecipeEventToRecipe(ctx, req.EventID, recipeID); err != nil {
+		return nil, err
+	}
+
+	return &models.Recipe{
+		ID:          recipeID,
+		Name:        r.Name,
+		Variant:     r.Variant,
+		Tags:        make([]*models.Tag, 0),
+		Ingredients: make([]*models.Ingredient, 0),
+	}, nil
 }
 
 // UpdateRecipe updates a recipe
