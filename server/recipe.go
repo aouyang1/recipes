@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"recipes/models"
+	"recipes/store"
 	storemodels "recipes/store/models"
 
 	"github.com/gin-gonic/gin"
@@ -103,13 +104,40 @@ func (s *Server) updateRecipe(ctx context.Context, req *models.Recipe) error {
 		return err
 	}
 
+	existingTags, err := s.store.GetRecipeTags(ctx, r.ID)
+	if err != nil {
+		return err
+	}
+
+	reqTags := make(map[string]struct{})
 	for _, tag := range req.Tags {
+		reqTags[tag.Name] = struct{}{}
 		if err := s.store.UpsertRecipeToTag(ctx, r.ID, tag.ID); err != nil {
 			return err
 		}
 	}
 
+	// remove tags that are no longer associated with the recipe
+	for _, tag := range existingTags {
+		if _, ok := reqTags[tag.Name]; !ok {
+			params := &store.DeleteRecipeToTagParams{
+				RecipeID: r.ID,
+				TagID:    tag.ID,
+			}
+			if err := s.store.DeleteRecipeToTag(ctx, params); err != nil {
+				return err
+			}
+		}
+	}
+
+	existingIngredients, _, err := s.store.GetRecipeIngredients(ctx, r.ID)
+	if err != nil {
+		return err
+	}
+
+	reqIngredients := make(map[string]struct{})
 	for _, ingredient := range req.Ingredients {
+		reqIngredients[ingredient.Name] = struct{}{}
 		r2i := &storemodels.RecipeToIngredient{
 			RecipeID:     r.ID,
 			IngredientID: ingredient.ID,
@@ -121,5 +149,19 @@ func (s *Server) updateRecipe(ctx context.Context, req *models.Recipe) error {
 			return err
 		}
 	}
+
+	// remove ingredients that are no longer associated with the recipe
+	for _, ingredient := range existingIngredients {
+		if _, ok := reqIngredients[ingredient.Name]; !ok {
+			params := &store.DeleteRecipeToIngredientParams{
+				RecipeID:     r.ID,
+				IngredientID: ingredient.ID,
+			}
+			if err := s.store.DeleteRecipeToIngredient(ctx, params); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }

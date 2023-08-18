@@ -108,11 +108,11 @@ func (s *Server) getRecipesByTag(ctx context.Context, tagID uint64) ([]*models.R
 func (s *Server) storeRecipesToAPI(ctx context.Context, storeRecipes []*storemodels.Recipe) ([]*models.Recipe, error) {
 	recipes := make([]*models.Recipe, 0, len(storeRecipes))
 	for _, storeRecipe := range storeRecipes {
-		storeIngredients, storeQuant, err := s.store.GetRecipeIngredients(ctx, storeRecipe.Name, storeRecipe.Variant)
+		storeIngredients, storeQuant, err := s.store.GetRecipeIngredients(ctx, storeRecipe.ID)
 		if err != nil {
 			return nil, err
 		}
-		storeTags, err := s.store.GetRecipeTags(ctx, storeRecipe.Name, storeRecipe.Variant)
+		storeTags, err := s.store.GetRecipeTags(ctx, storeRecipe.ID)
 		if err != nil {
 			return nil, err
 		}

@@ -135,16 +135,19 @@ func (c *Client) GetRecipeRecipeEvents(ctx context.Context, name, variant string
 
 type DeleteRecipeEventToRecipeParams struct {
 	RecipeEventID string `db:"recipe_event_id"`
-	RecipeName    string `db:"recipe_name"`
-	RecipeVariant string `db:"recipe_variant"`
+	RecipeID      uint64 `db:"recipe_id"`
 }
 
-func (c *Client) DeleteRecipeEventToRecipe(ctx context.Context, params DeleteRecipeEventToRecipeParams) error {
+func (c *Client) DeleteRecipeEventToRecipe(ctx context.Context, params *DeleteRecipeEventToRecipeParams) error {
+	if params == nil {
+		return nil
+	}
+
 	if params.RecipeEventID == "" {
 		return ErrInvalidRecipeEventID
 	}
 
-	if params.RecipeName == "" {
+	if params.RecipeID == 0 {
 		return ErrInvalidRecipe
 	}
 
@@ -152,7 +155,7 @@ func (c *Client) DeleteRecipeEventToRecipe(ctx context.Context, params DeleteRec
 		ctx,
 		`DELETE FROM recipe_event_to_recipe
 		       WHERE recipe_event_id = :recipe_event_id
-			     AND recipe_id = (SELECT id FROM recipe WHERE name = :recipe_name AND variant = :recipe_variant)`,
+			     AND recipe_id = :recipe_id`,
 		params,
 	)
 	if err != nil {

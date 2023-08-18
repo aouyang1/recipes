@@ -40,8 +40,8 @@ func (c *Client) UpsertRecipeToIngredient(ctx context.Context, r2i *models.Recip
 	return err
 }
 
-func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string) ([]*models.Ingredient, []*models.RecipeToIngredient, error) {
-	if name == "" {
+func (c *Client) GetRecipeIngredients(ctx context.Context, recipeID uint64) ([]*models.Ingredient, []*models.RecipeToIngredient, error) {
+	if recipeID == 0 {
 		return nil, nil, ErrInvalidRecipe
 	}
 
@@ -51,10 +51,9 @@ func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string)
 		   FROM ingredient
 		   JOIN (SELECT ingredient_id, quantity, unit, size
 		           FROM recipe_to_ingredient
-		          WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?)) as r2i
+		          WHERE recipe_id = ?) as r2i
 			 ON ingredient.id = r2i.ingredient_id`,
-		name,
-		variant,
+		recipeID,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -125,24 +124,26 @@ func (c *Client) GetIngredientRecipes(ctx context.Context, ingredientID uint64) 
 }
 
 type DeleteRecipeToIngredientParams struct {
-	RecipeName    string `db:"recipe_name"`
-	RecipeVariant string `db:"recipe_variant"`
-	Ingredient    string `db:"ingredient"`
+	RecipeID     uint64 `db:"recipe_id"`
+	IngredientID uint64 `db:"ingredient_id"`
 }
 
-func (c *Client) DeleteRecipeToIngredient(ctx context.Context, params DeleteRecipeToIngredientParams) error {
-	if params.RecipeName == "" {
+func (c *Client) DeleteRecipeToIngredient(ctx context.Context, params *DeleteRecipeToIngredientParams) error {
+	if params == nil {
+		return nil
+	}
+	if params.RecipeID == 0 {
 		return ErrInvalidRecipe
 	}
-	if params.Ingredient == "" {
+	if params.IngredientID == 0 {
 		return ErrInvalidIngredient
 	}
 
 	result, err := c.conn.NamedExecContext(
 		ctx,
 		`DELETE FROM recipe_to_ingredient
-		       WHERE recipe_id = (SELECT id FROM recipe WHERE name = :recipe_name AND variant = :recipe_variant)
-			     AND ingredient_id = (SELECT id FROM ingredient WHERE name = :ingredient)`,
+		       WHERE recipe_id = :recipe_id
+			     AND ingredient_id = :ingredient_id`,
 		params,
 	)
 	if err != nil {

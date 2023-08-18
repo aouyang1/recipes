@@ -42,8 +42,8 @@ func (c *Client) UpsertRecipeToTag(ctx context.Context, recipeID uint64, tagID u
 	return err
 }
 
-func (c *Client) GetRecipeTags(ctx context.Context, name, variant string) ([]*models.Tag, error) {
-	if name == "" {
+func (c *Client) GetRecipeTags(ctx context.Context, recipeID uint64) ([]*models.Tag, error) {
+	if recipeID == 0 {
 		return nil, ErrInvalidRecipe
 	}
 
@@ -53,10 +53,9 @@ func (c *Client) GetRecipeTags(ctx context.Context, name, variant string) ([]*mo
 		   FROM tag
 		   JOIN (SELECT tag_id
 		           FROM recipe_to_tag
-		          WHERE recipe_id = (SELECT id FROM recipe WHERE name = ? AND variant = ?)) as r2t
+		          WHERE recipe_id = ?) as r2t
 			 ON tag.id = r2t.tag_id`,
-		name,
-		variant,
+		recipeID,
 	)
 	if err != nil {
 		return nil, err
@@ -118,24 +117,26 @@ func (c *Client) GetTagRecipes(ctx context.Context, tagID uint64) ([]*models.Rec
 }
 
 type DeleteRecipeToTagParams struct {
-	RecipeName    string `db:"recipe_name"`
-	RecipeVariant string `db:"recipe_variant"`
-	Tag           string `db:"tag"`
+	RecipeID uint64 `db:"recipe_id"`
+	TagID    uint64 `db:"tag_id"`
 }
 
-func (c *Client) DeleteRecipeToTag(ctx context.Context, params DeleteRecipeToTagParams) error {
-	if params.RecipeName == "" {
+func (c *Client) DeleteRecipeToTag(ctx context.Context, params *DeleteRecipeToTagParams) error {
+	if params == nil {
+		return nil
+	}
+	if params.RecipeID == 0 {
 		return ErrInvalidRecipe
 	}
-	if params.Tag == "" {
+	if params.TagID == 0 {
 		return ErrInvalidTag
 	}
 
 	result, err := c.conn.NamedExecContext(
 		ctx,
 		`DELETE FROM recipe_to_tag
-		       WHERE recipe_id = (SELECT id FROM recipe WHERE name = :recipe_name AND variant = :recipe_variant)
-			     AND tag_id = (SELECT id FROM tag WHERE name = :tag)`,
+		       WHERE recipe_id = :recipe_id
+			     AND tag_id = :tag_id`,
 		params,
 	)
 	if err != nil {
