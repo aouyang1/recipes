@@ -43,12 +43,12 @@ function getRecipesByRecipeEventID(recipe_event_id) {
             recipes = JSON.parse(data.response);
             store.listSubItems = recipes;
 
-            RenderNewLinkRecipeButton(recipe_event_id);
-            RenderSubList();
+            renderNewLinkRecipeButton(recipe_event_id);
+            renderSubList();
         })
 }
 
-function RenderNewLinkRecipeButton(recipe_event_id) {
+function renderNewLinkRecipeButton(recipe_event_id) {
     /*
     <div class="btn-group">
       <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
@@ -116,11 +116,11 @@ function RenderNewLinkRecipeButton(recipe_event_id) {
             // variable and focus on the newly created one
             recipe_name = d3.select("#dropdownFormName").property('value');
             recipe_variant = d3.select("#dropdownFormLink").property('value'); 
-            CreateLinkEventToRecipe(d, recipe_name, recipe_variant)
+            createLinkEventToRecipe(d, recipe_name, recipe_variant)
         });
 }
 
-function CreateLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
+function createLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
     req = {
         "recipe_event_id": recipe_event_id,
         "recipe": {
@@ -138,12 +138,12 @@ function CreateLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
             if (data.response) {
                 recipe = JSON.parse(data.response); 
                 store.listSubItems.push(recipe);
-                RenderSubList();
+                renderSubList();
             }
         });
 }
 
-function RenderSubList() {
+function renderSubList() {
     /*
     <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
         <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
@@ -162,105 +162,10 @@ function RenderSubList() {
             .attr("id", d => d.name + ":" + d.variant)
             .attr("data-bs-toggle", "list")
             .on("click", (_, recipe) => {
-                title = d3.select("#title-sub-item")
-                    .append("div")
-                        .attr("class", "border-bottom");
-
-                nameInput = title.append("div")
-                    .attr("class", "input-group input-group-sm px-2 pt-4 pb-2");
-
-                nameInput.append("div")
-                        .attr("class", "input-group-prepend")
-                    .append("span")
-                        .attr("class", "input-group-text")
-                        .text("Name");
-                nameInput.append("input")
-                    .attr("class", "form-control")
-                    .attr("type", "text")
-                    .property("value", recipe.name)
-                    .on('change', function() {
-                        recipe.name = d3.select(this).property('value');
-                    });
-
-                variantInput = title.append("div")
-                    .attr("class", "input-group input-group-sm px-2 pb-4");
-                    
-                variantInput.append("div")
-                        .attr("class", "input-group-prepend")
-                    .append("span")
-                        .attr("class", "input-group-text")
-                        .text("URL");
-                variantInput.append("input")
-                    .attr("class", "form-control")
-                    .attr("type", "text")
-                    .property("value", recipe.variant)
-                    .on('change', function() {
-                        recipe.variant = d3.select(this).property('value');
-                    });
-
-                badges = d3.select("#badges-recipe-tags");
-                /*
-                <div class="input-group mb-3">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text" id="basic-addon1">@</span>
-                  </div>
-                  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-                </div>
-                */
-                tagInput = badges.append("div")
-                    .attr("class", "col-6 input-group input-group-sm p-2");
-
-                tagInput.append("div")
-                        .attr("class", "input-group-prepend")
-                    .append("span")
-                        .attr("class", "input-group-text")
-                        .text("Tags");
-                tagInput.append("input")
-                    .attr("class", "form-control")
-                    .attr("type", "text");
-
-                /*
-                <span class="badge badge-pill badge-info">Info</span>
-                */
-                badges.selectAll("a")
-                    .data(recipe.tags)
-                    .enter()
-                    .append("a")
-                        .attr("class", "p-1")
-                        .attr("id", d => "badge-" + d)
-                    .append("span")
-                        .attr("class", "badge rounded-pill bg-info text-dark")
-                        .text(d => d)
-                    .append("i")
-                        .attr("class", "icon-remove px-1")
-                        .attr("style", "color:red")
-                        .on("click", (i, d) => {
-                            d3.select("#badge-"+d).remove();
-                            idx = recipe.tags.indexOf(d);
-                            recipe.tags.splice(idx, 1);
-                        });
-
-
-                table = d3.select("#table-recipe-ingredients");
-                /*
-                <div class="input-group mb-3">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text" id="basic-addon1">@</span>
-                  </div>
-                  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-                </div>
-                */
-                ingInput = table.append("div")
-                    .attr("class", "col-6 input-group input-group-sm px-2 pb-2 pt-5");
-
-                ingInput.append("div")
-                        .attr("class", "input-group-prepend")
-                    .append("span")
-                        .attr("class", "input-group-text")
-                        .text("Ingredients");
-                ingInput.append("input")
-                    .attr("class", "form-control")
-                    .attr("type", "text");
+                clearRecipeUpdate();
+                renderRecipeUpdateTitle(recipe);
+                renderRecipeUpdateTags(recipe);
+                renderRecipeUpdateIngredients(recipe);
 
                 /*
                 <button type="button" class="btn btn-primary btn-sm">Small button</button>
@@ -287,6 +192,111 @@ function RenderSubList() {
         .append("d")
             .attr("class", "col-10 mb-1 small")
             .text(d => d.name);
+}
+
+function renderRecipeUpdateTitle(recipe) {
+    title = d3.select("#title-sub-item")
+        .append("div")
+            .attr("class", "border-bottom");
+
+    nameInput = title.append("div")
+        .attr("class", "input-group input-group-sm px-2 pt-4 pb-2");
+
+    nameInput.append("div")
+            .attr("class", "input-group-prepend")
+        .append("span")
+            .attr("class", "input-group-text")
+            .text("Name");
+    nameInput.append("input")
+        .attr("class", "form-control")
+        .attr("type", "text")
+        .property("value", recipe.name)
+        .on('change', function() {
+            recipe.name = d3.select(this).property('value');
+        });
+
+    variantInput = title.append("div")
+        .attr("class", "input-group input-group-sm px-2 pb-4");
+        
+    variantInput.append("div")
+            .attr("class", "input-group-prepend")
+        .append("span")
+            .attr("class", "input-group-text")
+            .text("URL");
+    variantInput.append("input")
+        .attr("class", "form-control")
+        .attr("type", "text")
+        .property("value", recipe.variant)
+        .on('change', function() {
+            recipe.variant = d3.select(this).property('value');
+        });
+}
+
+function renderRecipeUpdateTags(recipe) {
+    badges = d3.select("#badges-recipe-tags");
+    /*
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">@</span>
+      </div>
+      <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+    </div>
+    */
+    tagInput = badges.append("div")
+        .attr("class", "col-6 input-group input-group-sm p-2");
+
+    tagInput.append("div")
+            .attr("class", "input-group-prepend")
+        .append("span")
+            .attr("class", "input-group-text")
+            .text("Tags");
+    tagInput.append("input")
+        .attr("class", "form-control")
+        .attr("type", "text");
+
+    /*
+    <span class="badge badge-pill badge-info">Info</span>
+    */
+    badges.selectAll("a")
+        .data(recipe.tags)
+        .enter()
+        .append("a")
+            .attr("class", "p-1")
+            .attr("id", d => "badge-" + d)
+        .append("span")
+            .attr("class", "badge rounded-pill bg-info text-dark")
+            .text(d => d)
+        .append("i")
+            .attr("class", "icon-remove px-1")
+            .attr("style", "color:red")
+            .on("click", (_, d) => {
+                d3.select("#badge-"+d).remove();
+                idx = recipe.tags.indexOf(d);
+                recipe.tags.splice(idx, 1);
+            });
+}
+
+function renderRecipeUpdateIngredients(recipe) {
+    table = d3.select("#table-recipe-ingredients");
+    /*
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">@</span>
+      </div>
+      <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+    </div>
+    */
+    ingInput = table.append("div")
+        .attr("class", "col-6 input-group input-group-sm px-2 pb-2 pt-5");
+
+    ingInput.append("div")
+            .attr("class", "input-group-prepend")
+        .append("span")
+            .attr("class", "input-group-text")
+            .text("Ingredients");
+    ingInput.append("input")
+        .attr("class", "form-control")
+        .attr("type", "text");
 }
 
 function clearListItems() {
