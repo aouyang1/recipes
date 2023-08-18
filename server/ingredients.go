@@ -42,6 +42,7 @@ func (s *Server) getIngredients(ctx context.Context) ([]*models.Ingredient, erro
 
 func storeIngredientToAPI(storeIngredient *storemodels.Ingredient, storeQuant *storemodels.RecipeToIngredient) *models.Ingredient {
 	i := &models.Ingredient{
+		ID:   storeIngredient.ID,
 		Name: storeIngredient.Name,
 	}
 	if storeQuant != nil {

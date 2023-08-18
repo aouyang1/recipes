@@ -26,19 +26,21 @@ func (s *Server) PostIngredient(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), PostIngredientTimeout)
 	defer cancel()
-	if err := s.postIngredient(ctx, &req); err != nil {
+	ingredientID, err := s.postIngredient(ctx, &req)
+	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	req.ID = ingredientID
+	c.JSON(http.StatusCreated, req)
 }
 
-func (s *Server) postIngredient(ctx context.Context, ingredient *models.Ingredient) error {
+func (s *Server) postIngredient(ctx context.Context, ingredient *models.Ingredient) (uint64, error) {
 	i := &storemodels.Ingredient{
-		ID:   ingredient.ID(),
+		ID:   ingredient.ID,
 		Name: ingredient.Name,
 	}
-	return s.store.InsertIngredient(ctx, i)
+	return s.store.UpsertIngredient(ctx, i)
 }
 
 // DeleteIngredient removes an ingredient from the db
@@ -59,5 +61,5 @@ func (s *Server) DeleteIngredient(c *gin.Context) {
 }
 
 func (s *Server) deleteIngredient(ctx context.Context, ingredient *models.Ingredient) error {
-	return s.store.DeleteIngredient(ctx, ingredient.Name)
+	return s.store.DeleteIngredient(ctx, ingredient.ID)
 }

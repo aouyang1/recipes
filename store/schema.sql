@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS recipe_event_to_recipe (
 CREATE INDEX recipe_id_idx ON recipe_event_to_recipe (recipe_id);
 
 CREATE TABLE IF NOT EXISTS recipe (
-    id BIGINT(20) UNSIGNED,
+    id BIGINT(20) UNSIGNED AUTO_INCREMENT,
     name VARCHAR(255),
     variant VARCHAR(255),
     created_on BIGINT(20),
@@ -34,14 +34,14 @@ CREATE TABLE IF NOT EXISTS recipe_to_tag (
 CREATE INDEX tag_idx ON recipe_to_tag (tag);
 
 CREATE TABLE IF NOT EXISTS tag (
-    id BIGINT(20) UNSIGNED,
+    id BIGINT(20) UNSIGNED AUTO_INCREMENT,
     name VARCHAR(255),
     PRIMARY KEY (id)
 );
 CREATE INDEX name_idx ON tag (name);
 
 CREATE TABLE IF NOT EXISTS ingredient (
-    id BIGINT(20) UNSIGNED,
+    id BIGINT(20) UNSIGNED AUTO_INCREMENT,
     name VARCHAR(255),
     PRIMARY KEY (id)
 );

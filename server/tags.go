@@ -27,13 +27,13 @@ func (s *Server) GetTags(c *gin.Context) {
 
 }
 
-func (s *Server) getTags(ctx context.Context) ([]models.Tag, error) {
+func (s *Server) getTags(ctx context.Context) ([]*models.Tag, error) {
 	storeTags, err := s.store.GetTags(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	tags := make([]models.Tag, 0, len(storeTags))
+	tags := make([]*models.Tag, 0, len(storeTags))
 	for _, storeTag := range storeTags {
 		tags = append(tags, storeTagToAPI(storeTag))
 	}
@@ -41,6 +41,9 @@ func (s *Server) getTags(ctx context.Context) ([]models.Tag, error) {
 	return tags, nil
 }
 
-func storeTagToAPI(storeTag *storemodels.Tag) models.Tag {
-	return models.Tag(storeTag.Name)
+func storeTagToAPI(storeTag *storemodels.Tag) *models.Tag {
+	return &models.Tag{
+		ID:   storeTag.ID,
+		Name: storeTag.Name,
+	}
 }

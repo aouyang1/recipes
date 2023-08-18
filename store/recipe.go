@@ -14,21 +14,38 @@ var (
 	ErrRecipeNotFound  = errors.New("recipe not found")
 )
 
-func (c *Client) InsertRecipe(ctx context.Context, recipe *models.Recipe) error {
-	_, err := c.ExistsRecipe(ctx, recipe.Name, recipe.Variant)
-	if err == nil {
-		return ErrDuplicateRecipe
+func (c *Client) UpsertRecipe(ctx context.Context, recipe *models.Recipe) (uint64, error) {
+	if recipe.ID == 0 {
+		result, err := c.conn.NamedExecContext(
+			ctx,
+			`INSERT INTO recipe (name, variant, created_on)
+			  VALUES (:name, :variant, :created_on)`,
+			recipe,
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		id, err := result.LastInsertId()
+		if err != nil {
+			return 0, err
+		}
+		return uint64(id), nil
 	}
-	if !errors.Is(err, ErrRecipeNotFound) {
-		return err
-	}
-	_, err = c.conn.NamedExecContext(
+
+	_, err := c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO recipe (id, name, variant, created_on)
-			  VALUES (:id, :name, :variant, :created_on)`,
+			  VALUES (:id, :name, :variant, :created_on)
+		 ON DUPLICATE KEY UPDATE name = :name, variant = :variant, created_on = :created_on`,
 		recipe,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return recipe.ID, nil
+
 }
 
 func (c *Client) ExistsRecipe(ctx context.Context, name, variant string) (uint64, error) {

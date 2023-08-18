@@ -12,12 +12,12 @@ var (
 	ErrRecipeEventToRecipeNotFound = errors.New("recipe event to recipe not found")
 )
 
-func (c *Client) UpsertRecipeEventToRecipe(ctx context.Context, recipeEventID string, recipeName, recipeVariant string) error {
+func (c *Client) UpsertRecipeEventToRecipe(ctx context.Context, recipeEventID string, recipeID uint64) error {
 	if recipeEventID == "" {
 		return ErrInvalidRecipeEventID
 	}
 
-	if recipeName == "" {
+	if recipeID == 0 {
 		return ErrInvalidRecipe
 	}
 
@@ -27,11 +27,6 @@ func (c *Client) UpsertRecipeEventToRecipe(ctx context.Context, recipeEventID st
 	}
 	if !exists {
 		return ErrRecipeEventNotFound
-	}
-
-	recipeID, err := c.ExistsRecipe(ctx, recipeName, recipeVariant)
-	if err != nil {
-		return err
 	}
 
 	re2r := models.RecipeEventToRecipe{

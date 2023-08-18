@@ -15,21 +15,37 @@ var (
 	ErrIngredientInUseByRecipes = errors.New("ingredient is in use by recipes")
 )
 
-func (c *Client) InsertIngredient(ctx context.Context, ingredient *models.Ingredient) error {
-	_, err := c.ExistsIngredient(ctx, ingredient.Name)
-	if err == nil {
-		return ErrDuplicateIngredient
+func (c *Client) UpsertIngredient(ctx context.Context, ingredient *models.Ingredient) (uint64, error) {
+	if ingredient.ID == 0 {
+		result, err := c.conn.NamedExecContext(
+			ctx,
+			`INSERT INTO ingredient (name)
+			  VALUES (:name)`,
+			ingredient,
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		id, err := result.LastInsertId()
+		if err != nil {
+			return 0, err
+		}
+		return uint64(id), nil
 	}
-	if !errors.Is(err, ErrIngredientNotFound) {
-		return err
-	}
-	_, err = c.conn.NamedExecContext(
+
+	_, err := c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO ingredient (id, name)
-			  VALUES (:id, :name)`,
+			  VALUES (:id, :name)
+		 ON DUPLICATE KEY UPDATE name = :name`,
 		ingredient,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return ingredient.ID, nil
 }
 
 func (c *Client) ExistsIngredient(ctx context.Context, name string) (uint64, error) {
@@ -73,12 +89,12 @@ func (c *Client) GetIngredients(ctx context.Context) ([]*models.Ingredient, erro
 	return ingredients, nil
 }
 
-func (c *Client) DeleteIngredient(ctx context.Context, name string) error {
-	if name == "" {
+func (c *Client) DeleteIngredient(ctx context.Context, id uint64) error {
+	if id == 0 {
 		return ErrInvalidIngredient
 	}
 
-	recipes, err := c.GetIngredientRecipes(ctx, []string{strings.ToLower(name)})
+	recipes, err := c.GetIngredientRecipes(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -89,8 +105,8 @@ func (c *Client) DeleteIngredient(ctx context.Context, name string) error {
 
 	_, err = c.conn.ExecContext(
 		ctx,
-		`DELETE FROM ingredient WHERE name = ?`,
-		strings.ToLower(name),
+		`DELETE FROM ingredient WHERE id = ?`,
+		id,
 	)
 	return err
 }

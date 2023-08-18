@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"recipes/store/models"
 )
@@ -93,25 +92,20 @@ func (c *Client) GetRecipeIngredients(ctx context.Context, name, variant string)
 	return res, quant, nil
 }
 
-func (c *Client) GetIngredientRecipes(ctx context.Context, ingredients []string) ([]*models.Recipe, error) {
-	if len(ingredients) == 0 {
+func (c *Client) GetIngredientRecipes(ctx context.Context, ingredientID uint64) ([]*models.Recipe, error) {
+	if ingredientID == 0 {
 		return nil, nil
 	}
 
-	for i, ingredient := range ingredients {
-		ingredients[i] = strings.ToLower(ingredient)
-	}
-
-	rows, err := c.conn.QueryContext(
+	rows, err := c.conn.QueryxContext(
 		ctx,
 		`SELECT id, name, variant, created_on
 		   FROM recipe 
 		   JOIN (SELECT recipe_id
 		           FROM recipe_to_ingredient
-		           JOIN (SELECT id FROM ingredient WHERE name IN (?))
-				     ON recipe_to_ingredient.ingredient_id = ingredient.id) as r2i 
+				  WHERE ingredient_id = ?) as r2i 
 			 ON recipe.id = r2i.recipe_id`,
-		ingredients,
+		ingredientID,
 	)
 	if err != nil {
 		return nil, err
@@ -120,19 +114,11 @@ func (c *Client) GetIngredientRecipes(ctx context.Context, ingredients []string)
 
 	var res []*models.Recipe
 	for rows.Next() {
-		var id uint64
-		var name string
-		var variant string
-		var createdOn int64
-		if err := rows.Scan(&id, &name, &variant, &createdOn); err != nil {
+		var recipe models.Recipe
+		if err := rows.StructScan(&recipe); err != nil {
 			return nil, err
 		}
-		res = append(res, &models.Recipe{
-			ID:        id,
-			Name:      name,
-			Variant:   variant,
-			CreatedOn: createdOn,
-		})
+		res = append(res, &recipe)
 	}
 
 	if err := rows.Err(); err != nil {

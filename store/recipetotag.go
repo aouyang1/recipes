@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"recipes/store/models"
 )
@@ -85,25 +84,20 @@ func (c *Client) GetRecipeTags(ctx context.Context, name, variant string) ([]*mo
 	return res, nil
 }
 
-func (c *Client) GetTagRecipes(ctx context.Context, tags []string) ([]*models.Recipe, error) {
-	if len(tags) == 0 {
+func (c *Client) GetTagRecipes(ctx context.Context, tagID uint64) ([]*models.Recipe, error) {
+	if tagID == 0 {
 		return nil, nil
 	}
 
-	for i, tag := range tags {
-		tags[i] = strings.ToLower(tag)
-	}
-
-	rows, err := c.conn.QueryContext(
+	rows, err := c.conn.QueryxContext(
 		ctx,
 		`SELECT id, name, variant, created_on
 		   FROM recipe 
 		   JOIN (SELECT recipe_id
 		           FROM recipe_to_tag
-		           JOIN (SELECT id FROM tag WHERE name IN (?))
-				     ON recipe_to_tag.tag_id = tag.id) as r2t
+				  WHERE tag_id = ?) as r2t
 			 ON recipe.id = r2t.recipe_id`,
-		tags,
+		tagID,
 	)
 	if err != nil {
 		return nil, err
@@ -112,19 +106,11 @@ func (c *Client) GetTagRecipes(ctx context.Context, tags []string) ([]*models.Re
 
 	var res []*models.Recipe
 	for rows.Next() {
-		var id uint64
-		var name string
-		var variant string
-		var createdOn int64
-		if err := rows.Scan(&id, &name, &variant, &createdOn); err != nil {
+		var recipe models.Recipe
+		if err := rows.StructScan(&recipe); err != nil {
 			return nil, err
 		}
-		res = append(res, &models.Recipe{
-			ID:        id,
-			Name:      name,
-			Variant:   variant,
-			CreatedOn: createdOn,
-		})
+		res = append(res, &recipe)
 	}
 
 	if err := rows.Err(); err != nil {

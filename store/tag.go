@@ -16,24 +16,37 @@ var (
 	ErrTagInUseByRecipes = errors.New("tag is in use by recipes")
 )
 
-func (c *Client) InsertTag(ctx context.Context, tag *models.Tag) error {
-	_, err := c.ExistsTag(ctx, tag.Name)
-	if err == nil {
-		return ErrDuplicateTag
-	}
-	if !errors.Is(err, ErrTagNotFound) {
-		return err
+func (c *Client) UpsertTag(ctx context.Context, tag *models.Tag) (uint64, error) {
+	if tag.ID == 0 {
+		result, err := c.conn.NamedExecContext(
+			ctx,
+			`INSERT INTO tag (name)
+			  VALUES (:name)`,
+			tag,
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		id, err := result.LastInsertId()
+		if err != nil {
+			return 0, err
+		}
+		return uint64(id), nil
 	}
 
-	tag.Name = strings.ToLower(tag.Name)
-
-	_, err = c.conn.NamedExecContext(
+	_, err := c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO tag (id, name)
-			  VALUES (:id, :name)`,
+			  VALUES (:id, :name)
+		 ON DUPLICATE KEY UPDATE name = :name`,
 		tag,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return tag.ID, nil
 }
 
 func (c *Client) ExistsTag(ctx context.Context, name string) (uint64, error) {
@@ -77,12 +90,12 @@ func (c *Client) GetTags(ctx context.Context) ([]*models.Tag, error) {
 	return tags, nil
 }
 
-func (c *Client) DeleteTag(ctx context.Context, name string) error {
-	if name == "" {
+func (c *Client) DeleteTag(ctx context.Context, id uint64) error {
+	if id == 0 {
 		return ErrInvalidTag
 	}
 
-	recipes, err := c.GetTagRecipes(ctx, []string{strings.ToLower(name)})
+	recipes, err := c.GetTagRecipes(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -93,8 +106,8 @@ func (c *Client) DeleteTag(ctx context.Context, name string) error {
 
 	_, err = c.conn.ExecContext(
 		ctx,
-		`DELETE FROM tag WHERE name = ?`,
-		strings.ToLower(name),
+		`DELETE FROM tag WHERE id = ?`,
+		id,
 	)
 	return err
 }

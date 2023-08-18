@@ -16,13 +16,9 @@ var (
 	DeleteTagTimeout = time.Duration(5 * time.Second)
 )
 
-type TagRequest struct {
-	Name models.Tag `json:"name"`
-}
-
 // PostTag adds a tag to the db
 func (s *Server) PostTag(c *gin.Context) {
-	var req TagRequest
+	var req models.Tag
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -30,24 +26,26 @@ func (s *Server) PostTag(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), PostTagTimeout)
 	defer cancel()
-	if err := s.postTag(ctx, req.Name); err != nil {
+	tagID, err := s.postTag(ctx, &req)
+	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	req.ID = tagID
+	c.JSON(http.StatusCreated, req)
 }
 
-func (s *Server) postTag(ctx context.Context, tag models.Tag) error {
+func (s *Server) postTag(ctx context.Context, tag *models.Tag) (uint64, error) {
 	t := &storemodels.Tag{
-		ID:   tag.ID(),
-		Name: string(tag),
+		ID:   tag.ID,
+		Name: tag.Name,
 	}
-	return s.store.InsertTag(ctx, t)
+	return s.store.UpsertTag(ctx, t)
 }
 
 // DeleteTag removes a tag from the db
 func (s *Server) DeleteTag(c *gin.Context) {
-	var req TagRequest
+	var req models.Tag
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -55,13 +53,13 @@ func (s *Server) DeleteTag(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), DeleteTagTimeout)
 	defer cancel()
-	if err := s.deleteTag(ctx, req.Name); err != nil {
+	if err := s.deleteTag(ctx, &req); err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusOK)
 }
 
-func (s *Server) deleteTag(ctx context.Context, tag models.Tag) error {
-	return s.store.DeleteTag(ctx, string(tag))
+func (s *Server) deleteTag(ctx context.Context, tag *models.Tag) error {
+	return s.store.DeleteTag(ctx, tag.ID)
 }

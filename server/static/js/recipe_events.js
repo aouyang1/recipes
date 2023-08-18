@@ -35,6 +35,7 @@ function getRecipesByRecipeEventID(recipe_event_id) {
         .get(function(error, data) {
             if (error) throw error;
             recipes = JSON.parse(data.response);
+            console.log(recipes);
 
             list = d3.select("#list-sub-items");
             list.selectAll("*").remove();
@@ -128,6 +129,7 @@ function CreateLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
                 return
             }
             recipe = JSON.parse(data.response); 
+            console.log(recipe);
             AppendSubList([recipe])
         });
 }
@@ -149,13 +151,43 @@ function AppendSubList(items) {
             .attr("data-bs-toggle", "list")
             .on("click", (_, recipe) => {
                 console.log(recipe);
-                d3.select("#title-sub-item")
-                    .html(_ => {
-                        return "<div>" + recipe.name + "</div>" + "<a target=\"_blank\" href=\"" + recipe.variant + "\">" + recipe.variant + "</a>"
+                title = d3.select("#title-sub-item")
+                    .append("div")
+                        .attr("class", "border-bottom");
+
+                nameInput = title.append("div")
+                    .attr("class", "input-group input-group-sm px-2 pt-4 pb-2");
+
+                nameInput.append("div")
+                        .attr("class", "input-group-prepend")
+                    .append("span")
+                        .attr("class", "input-group-text")
+                        .text("Name");
+                nameInput.append("input")
+                    .attr("class", "form-control")
+                    .attr("type", "text")
+                    .property("value", recipe.name)
+                    .on('change', function() {
+                        recipe.name = d3.select(this).property('value');
+                        console.log(recipe);
                     });
 
-                // dummy tags
-                recipe.tags = ["tofu", "vegetarian", "burger"]
+                variantInput = title.append("div")
+                    .attr("class", "input-group input-group-sm px-2 pb-4");
+                    
+                variantInput.append("div")
+                        .attr("class", "input-group-prepend")
+                    .append("span")
+                        .attr("class", "input-group-text")
+                        .text("URL");
+                variantInput.append("input")
+                    .attr("class", "form-control")
+                    .attr("type", "text")
+                    .property("value", recipe.variant)
+                    .on('change', function() {
+                        recipe.variant = d3.select(this).property('value');
+                        console.log(recipe);
+                    });
 
                 badges = d3.select("#badges-recipe-tags");
                 /*
@@ -200,11 +232,6 @@ function AppendSubList(items) {
                             console.log(recipe);
                         });
 
-                ingredients = [
-                    {name: "firm tofu", quantity: "1", size: "lg", unit: null},
-                    {name: "salt", quantity: "1/4", size: null, unit: "tsp."},
-                    {name: "pepper", quantity: "1/4", size: null, unit: "tsp."},
-                ]
 
                 table = d3.select("#table-recipe-ingredients");
                 /*
@@ -227,24 +254,27 @@ function AppendSubList(items) {
                     .attr("class", "form-control")
                     .attr("type", "text");
 
-                tbl = table.append("table")
-                    .attr("class", "table table-sm");
+                /*
+                <button type="button" class="btn btn-primary btn-sm">Small button</button>
+                */
+                btn = d3.select("#button-save-recipe")
+                    .append("div")
+                    .attr("class", "col-3 px-2");
 
-                tbl.append("thead")
-                    .append("tr")
-                    .selectAll("th")
-                    .data(["Quantity", "Name"])
-                    .enter()
-                    .append("th")
-                        .attr("class", "col")
-                        .text(d => d);
-
-                tbl.append("tbody")
-                    .selectAll("tr")
-                    .data(ingredients)
-                    .enter()
-                    .append("td")
-                        .text(d => d.name);
+                btn.append("button")
+                    .attr("class", "btn btn-primary btn-sm")
+                    .text("Save")
+                    .on("click", (_, d) => {
+                        console.log("saving");
+                        d3.request("/recipe")
+                            .send("PUT", JSON.stringify(recipe), function(error, data) {
+                                if (error) {
+                                    console.log(error);
+                                    return
+                                }
+                                console.log(recipe);
+                            });
+                    });
 
             })
         .append("d")

@@ -62,7 +62,11 @@ func (s *Server) getRecipesByRecipeEventID(ctx context.Context, recipeEventID st
 }
 
 func (s *Server) getRecipesByIngredient(ctx context.Context, ingredient string) ([]*models.Recipe, error) {
-	storeRecipes, err := s.store.GetIngredientRecipes(ctx, []string{ingredient})
+	ingredientID, err := s.store.ExistsIngredient(ctx, ingredient)
+	if err != nil {
+		return nil, err
+	}
+	storeRecipes, err := s.store.GetIngredientRecipes(ctx, ingredientID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +75,11 @@ func (s *Server) getRecipesByIngredient(ctx context.Context, ingredient string) 
 }
 
 func (s *Server) getRecipesByTag(ctx context.Context, tag string) ([]*models.Recipe, error) {
-	storeRecipes, err := s.store.GetTagRecipes(ctx, []string{tag})
+	tagID, err := s.store.ExistsTag(ctx, tag)
+	if err != nil {
+		return nil, err
+	}
+	storeRecipes, err := s.store.GetTagRecipes(ctx, tagID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +105,7 @@ func (s *Server) storeRecipesToAPI(ctx context.Context, storeRecipes []*storemod
 
 func storeRecipeToAPI(storeRecipe *storemodels.Recipe, storeIngredient []*storemodels.Ingredient, storeQuant []*storemodels.RecipeToIngredient, storeTags []*storemodels.Tag) *models.Recipe {
 	recipe := &models.Recipe{
+		ID:      storeRecipe.ID,
 		Name:    storeRecipe.Name,
 		Variant: storeRecipe.Variant,
 	}
@@ -106,7 +115,7 @@ func storeRecipeToAPI(storeRecipe *storemodels.Recipe, storeIngredient []*storem
 		ingredients = append(ingredients, storeIngredientToAPI(storeIngredient, storeQuant[i]))
 	}
 
-	tags := make([]models.Tag, 0, len(storeTags))
+	tags := make([]*models.Tag, 0, len(storeTags))
 	for _, storeTag := range storeTags {
 		tags = append(tags, storeTagToAPI(storeTag))
 	}
