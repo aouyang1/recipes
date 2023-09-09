@@ -141,12 +141,13 @@ function createLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
             if (data.response) {
                 recipe = JSON.parse(data.response); 
                 store.listSubItems.push(recipe);
-                renderSubList();
+                renderSubList(recipe);
+                renderRecipeUpdate(recipe);
             }
         });
 }
 
-function renderSubList() {
+function renderSubList(selectSubItem) {
     /*
     <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
         <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
@@ -161,36 +162,16 @@ function renderSubList() {
         .data(store.listSubItems)
         .enter()
         .append("a")
-            .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
+            .attr("class", d => {
+                classStr = "list-group-item list-group-item-action py-3 lh-tight"
+                if (selectSubItem != null && selectSubItem.id == d.id) {
+                    classStr += " active"
+                }
+                return classStr;
+            })
             .attr("id", d => d.name + ":" + d.variant)
             .attr("data-bs-toggle", "list")
-            .on("click", (_, recipe) => {
-                clearRecipeUpdate();
-                renderRecipeUpdateTitle(recipe);
-                renderRecipeTagDropdown(recipe);
-
-                /*
-                <button type="button" class="btn btn-primary btn-sm">Small button</button>
-                */
-                btn = d3.select("#button-save-recipe")
-                    .append("div")
-                    .attr("class", "col-3 px-2");
-
-                btn.append("button")
-                    .attr("class", "btn btn-primary btn-sm")
-                    .text("Save")
-                    .on("click", (_, d) => {
-                        d3.request("/recipe")
-                            .send("PUT", JSON.stringify(recipe), function(error, data) {
-                                if (error) {
-                                    console.log(error);
-                                    return
-                                }
-                                console.log(recipe);
-                            });
-                    });
-
-            })
+            .on("click", (_, recipe) => {renderRecipeUpdate(recipe)})
         .append("d")
             .attr("class", "col-10 mb-1 small")
             .text(d => d.name);
@@ -328,4 +309,31 @@ function renderRecipeUpdateIngredients(recipe) {
     ingInput.append("input")
         .attr("class", "form-control")
         .attr("type", "text");
+}
+
+function renderRecipeUpdate(recipe) {
+    clearRecipeUpdate();
+    renderRecipeUpdateTitle(recipe);
+    renderRecipeTagDropdown(recipe);
+
+    /*
+    <button type="button" class="btn btn-primary btn-sm">Small button</button>
+    */
+    btn = d3.select("#button-save-recipe")
+        .append("div")
+        .attr("class", "col-3 px-2");
+
+    btn.append("button")
+        .attr("class", "btn btn-primary btn-sm")
+        .text("Save")
+        .on("click", (_, d) => {
+            d3.request("/recipe")
+                .send("PUT", JSON.stringify(recipe), function(error, data) {
+                    if (error) {
+                        console.log(error);
+                        return
+                    }
+                    console.log(recipe);
+                });
+        });
 }

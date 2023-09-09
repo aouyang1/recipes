@@ -59,6 +59,7 @@ func (s *Server) postRecipe(ctx context.Context, req *PostRecipeRequest) (*model
 
 	recipeID, err := s.store.UpsertRecipe(ctx, r)
 	if err != nil {
+		// if already exists then it means we are linking an existing recipe
 		if !errors.Is(err, store.ErrDuplicateRecipe) {
 			return nil, err
 		}
@@ -68,13 +69,18 @@ func (s *Server) postRecipe(ctx context.Context, req *PostRecipeRequest) (*model
 		return nil, err
 	}
 
-	return &models.Recipe{
-		ID:          recipeID,
-		Name:        r.Name,
-		Variant:     r.Variant,
-		Tags:        make([]*models.Tag, 0),
-		Ingredients: make([]*models.Ingredient, 0),
-	}, nil
+	recipes, err := s.getRecipes(ctx, "", req.EventID, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, recipe := range recipes {
+		if recipe.ID == recipeID {
+			return recipe, nil
+		}
+	}
+
+	return nil, store.ErrRecipeNotFound
 }
 
 // UpdateRecipe updates a recipe
