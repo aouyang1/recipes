@@ -15,6 +15,16 @@ var (
 )
 
 func (c *Client) UpsertIngredient(ctx context.Context, ingredient *models.Ingredient) (uint64, error) {
+	iid, err := c.ExistsIngredientName(ctx, ingredient.Name)
+	if err != nil {
+		return 0, err
+	}
+	// If the ingredient name exists, return early. we don't want too update the id
+	// of the ingredient.
+	if iid != 0 && ingredient.ID != iid {
+		return iid, ErrDuplicateIngredient
+	}
+
 	if ingredient.ID == 0 {
 		result, err := c.conn.NamedExecContext(
 			ctx,
@@ -33,7 +43,7 @@ func (c *Client) UpsertIngredient(ctx context.Context, ingredient *models.Ingred
 		return uint64(id), nil
 	}
 
-	_, err := c.conn.NamedExecContext(
+	_, err = c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO ingredient (id, name)
 			  VALUES (:id, :name)
@@ -57,6 +67,26 @@ func (c *Client) ExistsIngredient(ctx context.Context, ingredientID uint64) (uin
 		`SELECT id FROM ingredient WHERE id = ?`,
 		ingredientID,
 	)
+	if err := row.Scan(&ingredientID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrIngredientNotFound
+		}
+		return 0, err
+	}
+	return ingredientID, nil
+}
+
+func (c *Client) ExistsIngredientName(ctx context.Context, ingredient string) (uint64, error) {
+	if ingredient == "" {
+		return 0, nil
+	}
+
+	row := c.conn.QueryRowxContext(
+		ctx,
+		`SELECT id FROM ingredient WHERE name = ?`,
+		ingredient,
+	)
+	var ingredientID uint64
 	if err := row.Scan(&ingredientID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, ErrIngredientNotFound

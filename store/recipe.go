@@ -15,6 +15,16 @@ var (
 )
 
 func (c *Client) UpsertRecipe(ctx context.Context, recipe *models.Recipe) (uint64, error) {
+	rid, err := c.ExistsRecipeName(ctx, recipe.Name, recipe.Variant)
+	if err != nil {
+		return 0, err
+	}
+	// If the recipe name/variant exists, return early. we don't want too update the id
+	// of the recipe.
+	if rid != 0 && recipe.ID != rid {
+		return rid, ErrDuplicateRecipe
+	}
+
 	if recipe.ID == 0 {
 		result, err := c.conn.NamedExecContext(
 			ctx,
@@ -33,7 +43,7 @@ func (c *Client) UpsertRecipe(ctx context.Context, recipe *models.Recipe) (uint6
 		return uint64(id), nil
 	}
 
-	_, err := c.conn.NamedExecContext(
+	_, err = c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO recipe (id, name, variant, created_on)
 			  VALUES (:id, :name, :variant, :created_on)
@@ -65,5 +75,26 @@ func (c *Client) ExistsRecipe(ctx context.Context, recipeID uint64) (uint64, err
 		return 0, err
 	}
 
+	return recipeID, nil
+}
+
+func (c *Client) ExistsRecipeName(ctx context.Context, name, variant string) (uint64, error) {
+	if name == "" && variant == "" {
+		return 0, nil
+	}
+
+	row := c.conn.QueryRowxContext(
+		ctx,
+		`SELECT id FROM recipe WHERE name = ? AND variant = ?`,
+		name,
+		variant,
+	)
+	var recipeID uint64
+	if err := row.Scan(&recipeID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrRecipeNotFound
+		}
+		return 0, err
+	}
 	return recipeID, nil
 }

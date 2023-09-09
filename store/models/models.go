@@ -5,6 +5,7 @@ type RecipeEvent struct {
 	ScheduleDate int64  `db:"schedule_date"`
 	Title        string `db:"title"`
 	Description  string `db:"description"`
+	Count        int    `db:"cnt"`
 }
 
 type RecipeEventToRecipe struct {

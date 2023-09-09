@@ -18,6 +18,7 @@ type RecipeEvent struct {
 	Date        time.Time `json:"date"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
+	Count       int       `json:"count"`
 }
 
 func (r RecipeEvent) String() string {

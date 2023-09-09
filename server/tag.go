@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	"recipes/models"
+	"recipes/store"
 	storemodels "recipes/store/models"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +30,10 @@ func (s *Server) PostTag(c *gin.Context) {
 	defer cancel()
 	tagID, err := s.postTag(ctx, &req)
 	if err != nil {
+		if errors.Is(err, store.ErrDuplicateTag) {
+			c.Status(http.StatusOK)
+			return
+		}
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}

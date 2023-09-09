@@ -38,4 +38,6 @@ d3.select("#sidebar-manage-ingredients")
 
 
 d3.select("#list-items-title").text("Events");
+
+document.body.style.zoom = "80%";
 getRecipeEvents();

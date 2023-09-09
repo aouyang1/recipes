@@ -16,6 +16,16 @@ var (
 )
 
 func (c *Client) UpsertTag(ctx context.Context, tag *models.Tag) (uint64, error) {
+	tid, err := c.ExistsTagName(ctx, tag.Name)
+	if err != nil {
+		return 0, err
+	}
+	// If the tag name exists, return early. we don't want too update the id
+	// of the tag.
+	if tid != 0 && tag.ID != tid {
+		return tid, ErrDuplicateTag
+	}
+
 	if tag.ID == 0 {
 		result, err := c.conn.NamedExecContext(
 			ctx,
@@ -34,7 +44,7 @@ func (c *Client) UpsertTag(ctx context.Context, tag *models.Tag) (uint64, error)
 		return uint64(id), nil
 	}
 
-	_, err := c.conn.NamedExecContext(
+	_, err = c.conn.NamedExecContext(
 		ctx,
 		`INSERT INTO tag (id, name)
 			  VALUES (:id, :name)
@@ -58,6 +68,26 @@ func (c *Client) ExistsTag(ctx context.Context, tagID uint64) (uint64, error) {
 		`SELECT id FROM tag WHERE id = ?`,
 		tagID,
 	)
+	if err := row.Scan(&tagID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrTagNotFound
+		}
+		return 0, err
+	}
+	return tagID, nil
+}
+
+func (c *Client) ExistsTagName(ctx context.Context, tag string) (uint64, error) {
+	if tag == "" {
+		return 0, nil
+	}
+
+	row := c.conn.QueryRowxContext(
+		ctx,
+		`SELECT id FROM tag WHERE name = ?`,
+		tag,
+	)
+	var tagID uint64
 	if err := row.Scan(&tagID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, ErrTagNotFound

@@ -49,9 +49,12 @@ func (c *Client) ExistsRecipeEvent(ctx context.Context, recipeEventID string) (s
 func (c *Client) GetRecipeEvents(ctx context.Context) ([]*models.RecipeEvent, error) {
 	rows, err := c.conn.QueryxContext(
 		ctx,
-		`SELECT id, schedule_date, title, description
-		   FROM recipe_event
-	   ORDER BY schedule_date DESC`,
+		`SELECT id, schedule_date, title, description, count(recipe_event_to_recipe.recipe_id) as cnt
+           FROM recipe_event
+      LEFT JOIN recipe_event_to_recipe
+             ON recipe_event.id = recipe_event_to_recipe.recipe_event_id
+       GROUP BY id
+       ORDER BY schedule_date DESC`,
 	)
 	if err != nil {
 		return nil, err

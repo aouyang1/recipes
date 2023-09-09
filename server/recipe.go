@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -58,7 +59,9 @@ func (s *Server) postRecipe(ctx context.Context, req *PostRecipeRequest) (*model
 
 	recipeID, err := s.store.UpsertRecipe(ctx, r)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, store.ErrDuplicateRecipe) {
+			return nil, err
+		}
 	}
 
 	if err := s.store.UpsertRecipeEventToRecipe(ctx, req.EventID, recipeID); err != nil {

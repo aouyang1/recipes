@@ -42,7 +42,7 @@ func (s *Server) getAllRecipeEvents(ctx context.Context) ([]*models.RecipeEvent,
 		return nil, err
 	}
 
-	return storeRecipeEventsToAPI(storeRecipeEvents), nil
+	return storeRecipeEventsToAPI(storeRecipeEvents)
 }
 
 func (s *Server) getRecipeEventsByRecipe(ctx context.Context, name, variant string) ([]*models.RecipeEvent, error) {
@@ -51,18 +51,23 @@ func (s *Server) getRecipeEventsByRecipe(ctx context.Context, name, variant stri
 		return nil, err
 	}
 
-	return storeRecipeEventsToAPI(storeRecipeEvents), nil
+	return storeRecipeEventsToAPI(storeRecipeEvents)
 }
 
-func storeRecipeEventsToAPI(storeRecipeEvents []*storemodels.RecipeEvent) []*models.RecipeEvent {
+func storeRecipeEventsToAPI(storeRecipeEvents []*storemodels.RecipeEvent) ([]*models.RecipeEvent, error) {
 	recipeEvents := make([]*models.RecipeEvent, 0, len(storeRecipeEvents))
 	for _, storeRecipeEvent := range storeRecipeEvents {
-		recipeEvents = append(recipeEvents, &models.RecipeEvent{
-			ID:          storeRecipeEvent.ID,
-			Date:        time.Unix(storeRecipeEvent.ScheduleDate, 0).UTC(),
-			Title:       storeRecipeEvent.Title,
-			Description: storeRecipeEvent.Description,
-		})
+		re, err := models.NewRecipeEvent(
+			storeRecipeEvent.ID,
+			time.Unix(storeRecipeEvent.ScheduleDate, 0).UTC(),
+			storeRecipeEvent.Title,
+			storeRecipeEvent.Description,
+		)
+		if err != nil {
+			return nil, err
+		}
+		re.Count = storeRecipeEvent.Count
+		recipeEvents = append(recipeEvents, re)
 	}
-	return recipeEvents
+	return recipeEvents, nil
 }
