@@ -18,7 +18,9 @@ var (
 func (c *Client) UpsertTag(ctx context.Context, tag *models.Tag) (uint64, error) {
 	tid, err := c.ExistsTagName(ctx, tag.Name)
 	if err != nil {
-		return 0, err
+		if !errors.Is(err, ErrTagNotFound) {
+			return 0, err
+		}
 	}
 	// If the tag name exists, return early. we don't want too update the id
 	// of the tag.
@@ -100,7 +102,11 @@ func (c *Client) ExistsTagName(ctx context.Context, tag string) (uint64, error) 
 func (c *Client) GetTags(ctx context.Context) ([]*models.Tag, error) {
 	rows, err := c.conn.QueryxContext(
 		ctx,
-		`SELECT id, name FROM tag`,
+		`SELECT id, name, count(recipe_to_tag.recipe_id) as cnt
+		   FROM tag
+	  LEFT JOIN recipe_to_tag
+		     ON tag.id = recipe_to_tag.tag_id
+	   GROUP BY tag.id`,
 	)
 	if err != nil {
 		return nil, err

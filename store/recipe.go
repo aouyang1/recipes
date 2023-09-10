@@ -17,7 +17,9 @@ var (
 func (c *Client) UpsertRecipe(ctx context.Context, recipe *models.Recipe) (uint64, error) {
 	rid, err := c.ExistsRecipeName(ctx, recipe.Name, recipe.Variant)
 	if err != nil {
-		return 0, err
+		if !errors.Is(err, ErrRecipeNotFound) {
+			return 0, err
+		}
 	}
 	// If the recipe name/variant exists, return early. we don't want too update the id
 	// of the recipe.

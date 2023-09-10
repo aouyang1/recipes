@@ -114,5 +114,10 @@ function renderTagList() {
             })
         .append("d")
             .attr("class", "col-10 mb-1 small")
-            .text(d => d.name);
+            .html((d) => {
+                return "<div class=\"row\">"+
+                "<div class=\"col-11\">"+d.name+"</div>"+
+                "<div class=\"col-1\">"+(d.count > 0 ? d.count : "")+"</div>"+
+                "</div>"
+            });
 }

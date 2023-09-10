@@ -17,8 +17,11 @@ var (
 func (c *Client) UpsertIngredient(ctx context.Context, ingredient *models.Ingredient) (uint64, error) {
 	iid, err := c.ExistsIngredientName(ctx, ingredient.Name)
 	if err != nil {
-		return 0, err
+		if !errors.Is(err, ErrIngredientNotFound) {
+			return 0, err
+		}
 	}
+
 	// If the ingredient name exists, return early. we don't want too update the id
 	// of the ingredient.
 	if iid != 0 && ingredient.ID != iid {

@@ -21,8 +21,9 @@ type Recipe struct {
 }
 
 type Tag struct {
-	ID   uint64 `db:"id"`
-	Name string `db:"name"`
+	ID    uint64 `db:"id"`
+	Name  string `db:"name"`
+	Count int    `db:"cnt"`
 }
 
 type RecipeToTag struct {

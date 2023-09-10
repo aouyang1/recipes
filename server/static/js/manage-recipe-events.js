@@ -3,38 +3,44 @@ function getRecipeEvents() {
         .get(function(error, data) {
             if (error) throw error;
             recipe_events = JSON.parse(data.response);
-            list = d3.select("#list-items");
+            store.listItems = recipe_events;
+
             clearListItems()
             clearRecipeUpdate();
             clearListSubItems();
-
-            /*
-            <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
-                <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
-            </a>
-            */
-            list.selectAll("a")
-                .data(recipe_events)
-                .enter()
-                .append("a")
-                    .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
-                    .attr("id", d => d.id)
-                    .attr("data-bs-toggle", "list")
-                    .on("click", (_, d) => {
-                        clearRecipeUpdate();
-                        clearListSubItems();
-                        getRecipesByRecipeEventID(d.id);
-                    })
-                .append("d")
-                    .attr("class", "col-10 mb-1 small")
-                    .html((d) => {
-                        return "<div class=\"row\">"+
-                        "<div class=\"col-7\">"+d.title+"</div>"+
-                        "<div class=\"col-1\">"+(d.count > 0 ? d.count : "")+"</div>"+
-                        "<div class=\"col-4\">"+d.date.slice(0, 10)+"</div>"+
-                        "</div>"
-                    });
+            renderRecipeEvents();
         })
+}
+
+function renderRecipeEvents() {
+    /*
+    <a href="#" class="list-group-item list-group-item-action py-3 lh-tight active ">
+        <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
+    </a>
+    */
+
+    list = d3.select("#list-items");
+    list.selectAll("a")
+        .data(recipe_events)
+        .enter()
+        .append("a")
+            .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
+            .attr("id", d => d.id)
+            .attr("data-bs-toggle", "list")
+            .on("click", (_, d) => {
+                clearRecipeUpdate();
+                clearListSubItems();
+                getRecipesByRecipeEventID(d.id);
+            })
+        .append("d")
+            .attr("class", "col-10 mb-1 small")
+            .html((d) => {
+                return "<div class=\"row\">"+
+                "<div class=\"col-7\">"+d.title+"</div>"+
+                "<div class=\"col-1\">"+(d.count > 0 ? d.count : "")+"</div>"+
+                "<div class=\"col-4\">"+d.date.slice(0, 10)+"</div>"+
+                "</div>"
+            });
 }
 
 function getRecipesByRecipeEventID(recipe_event_id) {
@@ -143,6 +149,16 @@ function createLinkEventToRecipe(recipe_event_id, recipe_name, recipe_variant) {
                 store.listSubItems.push(recipe);
                 renderSubList(recipe);
                 renderRecipeUpdate(recipe);
+
+                // update internal count of list items of recipe events
+                for (i = 0; i < store.listItems.length; i++) {
+                    if (store.listItems[i].id == recipe_event_id) {
+                        store.listItems[i].count += 1;
+                        break;
+                    }
+                }
+                clearListItems();
+                renderRecipeEvents();
             }
         });
 }
