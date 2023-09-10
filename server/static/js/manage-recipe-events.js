@@ -9,6 +9,12 @@ function getRecipeEvents() {
             clearRecipeUpdate();
             clearListSubItems();
             renderRecipeEvents();
+
+            d3.select("#input-search-query")
+                .on("keyup", function() {
+                    clearListItems();
+                    renderRecipeEvents();
+                });
         })
 }
 
@@ -19,9 +25,17 @@ function renderRecipeEvents() {
     </a>
     */
 
+    query = d3.select("#input-search-query").property("value")
+    items = store.listItems;
+    if (query != "") {
+        items = store.listItems.filter(function(d) {
+            return d.title.toLowerCase().includes(query.toLowerCase());
+        });
+    }
+
     list = d3.select("#list-items");
     list.selectAll("a")
-        .data(store.listItems)
+        .data(items)
         .enter()
         .append("a")
             .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
