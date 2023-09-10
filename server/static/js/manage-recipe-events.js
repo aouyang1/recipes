@@ -21,11 +21,11 @@ function renderRecipeEvents() {
 
     list = d3.select("#list-items");
     list.selectAll("a")
-        .data(recipe_events)
+        .data(store.listItems)
         .enter()
         .append("a")
             .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
-            .attr("id", d => d.id)
+            .attr("id", d => "recipe_event-" + d.id)
             .attr("data-bs-toggle", "list")
             .on("click", (_, d) => {
                 clearRecipeUpdate();

@@ -72,9 +72,7 @@ function renderNewTagButton() {
 }
 
 function createTag(tag_name) {
-   req = {
-        "name": tag_name,
-    };
+    req = {"name": tag_name};
 
     d3.request("/tag")
         .post(JSON.stringify(req), function(error, data) {
@@ -100,13 +98,12 @@ function renderTagList() {
     list = d3.select("#list-items");
     list.selectAll("a").remove();
 
-    console.log(store.listItems);
     list.selectAll("a")
         .data(store.listItems)
         .enter()
         .append("a")
             .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
-            .attr("id", d => d.name + ":" + d.variant)
+            .attr("id", d => "tag-" + d.name)
             .attr("data-bs-toggle", "list")
             .on("click", (_, recipe) => {
                 clearListSubItems();
