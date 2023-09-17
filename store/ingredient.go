@@ -102,7 +102,12 @@ func (c *Client) ExistsIngredientName(ctx context.Context, ingredient string) (u
 func (c *Client) GetIngredients(ctx context.Context) ([]*models.Ingredient, error) {
 	rows, err := c.conn.QueryxContext(
 		ctx,
-		`SELECT id, name FROM ingredient`,
+		`SELECT id, name, count(recipe_to_ingredient.recipe_id) as cnt
+		   FROM ingredient
+	  LEFT JOIN recipe_to_ingredient
+		     ON ingredient.id = recipe_to_ingredient.ingredient_id
+	   GROUP BY ingredient.id
+	   ORDER BY name ASC`,
 	)
 	if err != nil {
 		return nil, err

@@ -43,8 +43,8 @@ func (s *Server) getTags(ctx context.Context) ([]*models.Tag, error) {
 
 func storeTagToAPI(storeTag *storemodels.Tag) *models.Tag {
 	return &models.Tag{
-		ID:    storeTag.ID,
-		Name:  storeTag.Name,
-		Count: storeTag.Count,
+		ID:          storeTag.ID,
+		Name:        storeTag.Name,
+		RecipeCount: storeTag.Count,
 	}
 }

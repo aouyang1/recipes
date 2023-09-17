@@ -8,6 +8,7 @@ function getRecipeEvents() {
             clearListItems()
             clearRecipeUpdate();
             clearListSubItems();
+
             renderRecipeEvents();
 
             d3.select("#input-search-query")

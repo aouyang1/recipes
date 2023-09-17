@@ -1,8 +1,9 @@
 package models
 
 type Ingredient struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
+	ID          uint64 `json:"id"`
+	Name        string `json:"name"`
+	RecipeCount int    `json:"recipe_count"`
 
 	Quantity int  `json:"quantity"`
 	Size     Size `json:"size,omitempty"`

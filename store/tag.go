@@ -106,7 +106,8 @@ func (c *Client) GetTags(ctx context.Context) ([]*models.Tag, error) {
 		   FROM tag
 	  LEFT JOIN recipe_to_tag
 		     ON tag.id = recipe_to_tag.tag_id
-	   GROUP BY tag.id`,
+	   GROUP BY tag.id
+	   ORDER BY name ASC`,
 	)
 	if err != nil {
 		return nil, err
