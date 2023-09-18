@@ -255,7 +255,9 @@ function renderRecipeTagDropdown(recipe) {
                 badges = d3.select("#badges-recipe-tags");
 
                 tagInput = badges.append("div")
-                    .attr("class", "col-6 input-group input-group-sm p-2");
+                    .attr("class", "col-3 p-2")
+                    .append("div")
+                    .attr("class", "input-group input-group-sm");
 
                 tagInput.append("button")
                     .attr("id", "input-update-tag")
@@ -276,7 +278,6 @@ function renderRecipeTagDropdown(recipe) {
                         .attr("class", "dropdown-item")
                         .text(d => d.name)
                         .on("click", function(_, d) {
-                            console.log(d);
                             if (recipe.tags.indexOf(d) < 0) {
                                 recipe.tags.push(d);
                                 renderRecipeUpdateTags(recipe);
@@ -285,7 +286,6 @@ function renderRecipeTagDropdown(recipe) {
             }
 
             renderRecipeUpdateTags(recipe);
-            renderRecipeUpdateIngredients(recipe);
         })
 }
 
@@ -295,7 +295,6 @@ function renderRecipeUpdateTags(recipe) {
     tags = badges.append("div")
         .attr("id", "badge-collection");
 
-    console.log(recipe.tags)
     /*
     <span class="badge badge-pill badge-info">Info</span>
     */
@@ -321,38 +320,147 @@ function renderRecipeUpdateTags(recipe) {
 
 function renderRecipeUpdateIngredients(recipe) {
     table = d3.select("#table-recipe-ingredients");
-    /*
-    <div class="input-group mb-3">
-      <div class="input-group-prepend">
-        <span class="input-group-text" id="basic-addon1">@</span>
-      </div>
-      <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-    </div>
-    */
+
+    // labels for updating ingedients
+    ingInputLabels = table.append("div")
+        .attr("class", "row");
+        
+    ingInputLabels.append("div")
+        .attr("class", "col-6")
+        .append("h6").text("Name");
+
+    ingInputLabels.append("div")
+        .attr("class", "col-2")
+        .append("h6").text("Quantity");
+
+    addSize = ingInputLabels.append("div")
+        .attr("class", "col-2")
+        .append("h6").text("Size/Unit");
+
+    ingInputLabels.append("div")
+        .attr("class", "col-2");
+
+    // input form for updating ingredients
+    renderRecipeIngredientDropdowns(table, recipe);
+}
+
+function renderRecipeIngredientDropdowns(table, recipe) {
     ingInput = table.append("div")
-        .attr("class", "col-6 input-group input-group-sm px-2 pb-2 pt-5");
+        .attr("class", "row");
+
+    ingAddName = ingInput.append("div")
+        .attr("class", "col-6");
+
+    ingAddName.append("input")
+            .attr("id", "ingredient-add-name")
+            .attr("class", "form-control")
+            .attr("type", "text")
+            .attr("list", "ingredients-list");
 
     ingInput.append("div")
-            .attr("class", "input-group-prepend")
-        .append("span")
-            .attr("class", "input-group-text")
-            .text("Ingredients");
-    ingInput.append("input")
-        .attr("class", "form-control")
-        .attr("type", "text");
+        .attr("class", "col-2")
+        .append("input")
+            .attr("id", "ingredient-add-quantity")
+            .attr("class", "form-control")
+            .attr("type", "number")
+            .attr("min", "0");
+
+    ingAddSize = ingInput.append("div")
+        .attr("class", "col-2");
+
+    ingAddSize.append("input")
+            .attr("id", "ingredient-add-size")
+            .attr("class", "form-control")
+            .attr("type", "text")
+            .attr("list", "sizes-list");
+    ingAddSize.append("datalist")
+        .attr("id", "sizes-list")
+        .selectAll("option")
+        .data(store.sizes.concat(store.units))
+        .enter()
+        .append("option")
+            .attr("value", d => d);
+
+    ingInput.append("div")
+        .attr("class", "col-2")
+        .append("button")
+            .attr("class", "btn btn-primary btn-sm")
+            .text("Add")
+            .on("click", (_, d) => {
+                addIngredientName = d3.select("#ingredient-add-name").property("value");
+                ingResults = store.ingredients.filter(function(d) {
+                    return d.name == addIngredientName;
+                });
+                if (ingResults.length != 1) {
+                    console.log("no ingredient found, " + addIngredientName);
+                    return
+                }
+                addIngredient = ingResults[0];
+
+                addIngredientSizeUnit = d3.select("#ingredient-add-size").property("value");
+                sizeResults = store.sizes.filter(function(d) {
+                    return d == addIngredientSizeUnit;
+                });
+                addSize = null;
+                if (sizeResults.length == 1) {
+                    addSize = sizeResults[0];
+                }
+
+                unitResults = store.units.filter(function(d) {
+                    return d == addIngredientSizeUnit;
+                });
+                addUnit = null;
+                if (unitResults.length == 1) {
+                    addUnit = unitResults[0];
+                }
+
+                nextIngredient = {
+                    "id": addIngredient.id,
+                    "name": addIngredient.name,
+                    "quantity": parseFloat(d3.select("#ingredient-add-quantity").property("value")),
+                };
+                if (addSize) {
+                    nextIngredient.size = addSize;
+                }
+                if (addUnit) {
+                    nextIngredient.unit = addUnit;
+                }
+                recipe.ingredients.push(nextIngredient);
+                console.log("adding ingredient, " + nextIngredient.name);
+            });
+
+    d3.request("/ingredients")
+        .get(function(error, data) {
+            if (error) throw error;
+            ingredients = JSON.parse(data.response);
+            store.ingredients = ingredients;
+            if (ingredients) {
+                ingAddName.append("datalist")
+                    .attr("id", "ingredients-list")
+                    .selectAll("option")
+                    .data(ingredients)
+                    .enter()
+                    .append("option")  
+                        .attr("value", d => d.name);
+            }
+        })
 }
 
 function renderRecipeUpdate(recipe) {
     clearRecipeUpdate();
     renderRecipeUpdateTitle(recipe);
-    renderRecipeTagDropdown(recipe);
-
+    renderRecipeTagDropdown(recipe); 
+    d3.select("#table-recipe-ingredients")
+        .append("h4")
+        .attr("class", "pt-4")
+        .text("Ingredients");
+    renderRecipeUpdateIngredients(recipe);
     /*
     <button type="button" class="btn btn-primary btn-sm">Small button</button>
     */
     btn = d3.select("#button-save-recipe")
         .append("div")
-        .attr("class", "col-3 px-2");
+        .attr("class", "col-3 px-2 pt-2");
 
     btn.append("button")
         .attr("class", "btn btn-primary btn-sm")

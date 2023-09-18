@@ -41,7 +41,7 @@ type RecipeToIngredient struct {
 	RecipeID     uint64 `db:"recipe_id"`
 	IngredientID uint64 `db:"ingredient_id"`
 
-	Quantity int    `db:"quantity"`
-	Unit     string `db:"unit"`
-	Size     string `db:"size"`
+	Quantity float64 `db:"quantity"`
+	Unit     string  `db:"unit"`
+	Size     string  `db:"size"`
 }

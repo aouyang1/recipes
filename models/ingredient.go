@@ -5,9 +5,9 @@ type Ingredient struct {
 	Name        string `json:"name"`
 	RecipeCount int    `json:"recipe_count"`
 
-	Quantity int  `json:"quantity"`
-	Size     Size `json:"size,omitempty"`
-	Unit     Unit `json:"unit,omitempty"`
+	Quantity float64 `json:"quantity"`
+	Size     Size    `json:"size,omitempty"`
+	Unit     Unit    `json:"unit,omitempty"`
 }
 
 type Size string
@@ -21,6 +21,8 @@ const (
 type Unit string
 
 const (
+	UnitMilliliter = "ml."
+	UnitGram       = "g."
 	UnitOunce      = "oz."
 	UnitPound      = "lb."
 	UnitCup        = "cup"

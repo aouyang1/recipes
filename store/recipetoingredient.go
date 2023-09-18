@@ -65,7 +65,7 @@ func (c *Client) GetRecipeIngredients(ctx context.Context, recipeID uint64) ([]*
 	for rows.Next() {
 		var id uint64
 		var name string
-		var quantity int
+		var quantity float64
 		var unit string
 		var size string
 		if err := rows.Scan(&id, &name, &quantity, &unit, &size); err != nil {

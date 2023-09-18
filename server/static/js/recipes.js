@@ -1,6 +1,9 @@
 store = {
     listItems: null, // list of items to render
     listSubItems: null, // list of sub items to render and update
+    ingredients: [],
+    sizes: ["sm", "md", "lg"],
+    units: ["ml.", "g.", "oz.", "lb.", "tsp.", "tbsp.", "cup"],
 }
 
 function clearListItems() {
