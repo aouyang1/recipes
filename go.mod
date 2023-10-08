@@ -3,13 +3,13 @@ module recipes
 go 1.20
 
 require (
-	github.com/cespare/xxhash v1.1.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/stretchr/testify v1.8.3
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/api v0.114.0
+	mvdan.cc/xurls/v2 v2.5.0
 )
 
 require (

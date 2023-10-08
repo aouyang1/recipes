@@ -3,7 +3,11 @@ package models
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
+
+	"mvdan.cc/xurls/v2"
 )
 
 var (
@@ -18,6 +22,7 @@ type RecipeEvent struct {
 	Date        time.Time `json:"date"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
+	URLs        []string  `json:"url_links"`
 	Count       int       `json:"count"`
 }
 
@@ -35,10 +40,34 @@ func NewRecipeEvent(id string, date time.Time, title, description string) (*Reci
 	if title == "" {
 		return nil, ErrNoRecipeEventTitle
 	}
+
+	rxStrict := xurls.Strict()
+	urls := rxStrict.FindAllString(description, -1)
+	distinctURLs := make(map[string]struct{})
+	for _, u := range urls {
+		distinctURLs[cleanURL(u)] = struct{}{}
+	}
+	urls = make([]string, 0, len(distinctURLs))
+	for u := range distinctURLs {
+		urls = append(urls, u)
+	}
 	return &RecipeEvent{
 		ID:          id,
 		Date:        date,
 		Title:       title,
+		URLs:        urls,
 		Description: description,
 	}, nil
+}
+
+func cleanURL(urlStr string) string {
+	if strings.Contains(urlStr, "www.google.com") {
+		//"https://www.google.com/url?q=https://carnaldish.com/recipes/the-best-homemade-smash-burgers/&sa=D&source=calendar&usd=2&usg=AOvVaw2Lz8Qatlh7ro-wBOxTj1Bn"
+		urlParsed, _ := url.Parse(urlStr)
+		query := urlParsed.Query().Get("q")
+		if len(query) > 0 {
+			return query
+		}
+	}
+	return urlStr
 }

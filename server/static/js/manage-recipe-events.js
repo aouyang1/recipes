@@ -35,10 +35,10 @@ function renderRecipeEvents() {
     }
 
     list = d3.select("#list-items");
-    list.selectAll("a")
+    list.selectAll("p")
         .data(items)
         .enter()
-        .append("a")
+        .append("p")
             .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
             .attr("id", d => "recipe_event-" + d.id)
             .attr("data-bs-toggle", "list")
@@ -50,8 +50,17 @@ function renderRecipeEvents() {
         .append("d")
             .attr("class", "col-10 mb-1 small")
             .html((d) => {
+                links = ""
+                if (d.url_links) {
+                    for (i = 0; i < d.url_links.length; i++) {
+                        links += "<a href=\"" + d.url_links[i] + "\" target=\"_blank\">[" + i + "]</a> "
+                    }
+                }
+                if (links.length > 0) {
+                    links = " " + links;
+                }
                 return "<div class=\"row\">"+
-                "<div class=\"col-7\">"+d.title+"</div>"+
+                "<div class=\"col-7\">"+d.title+links+"</div>"+
                 "<div class=\"col-1\">"+(d.count > 0 ? d.count : "")+"</div>"+
                 "<div class=\"col-4\">"+d.date.slice(0, 10)+"</div>"+
                 "</div>"
@@ -208,6 +217,37 @@ function renderSubList(selectSubItem) {
             .text(d => d.name);
 }
 
+function renderRecipeUpdate(recipe) {
+    clearRecipeUpdate();
+    renderRecipeUpdateTitle(recipe);
+    renderRecipeTagDropdown(recipe); 
+    d3.select("#table-recipe-ingredients")
+        .append("h4")
+        .attr("class", "pt-4")
+        .text("Ingredients");
+    renderRecipeUpdateIngredients(recipe);
+    /*
+    <button type="button" class="btn btn-primary btn-sm">Small button</button>
+    */
+    btn = d3.select("#button-save-recipe")
+        .append("div")
+        .attr("class", "col-3 px-2 pt-2");
+
+    btn.append("button")
+        .attr("class", "btn btn-primary btn-sm")
+        .text("Save")
+        .on("click", (_, d) => {
+            d3.request("/recipe")
+                .send("PUT", JSON.stringify(recipe), function(error, data) {
+                    if (error) {
+                        console.log(error);
+                        return
+                    }
+                    console.log(recipe);
+                });
+        });
+}
+
 function renderRecipeUpdateTitle(recipe) {
     title = d3.select("#title-sub-item")
         .append("div")
@@ -342,11 +382,16 @@ function renderRecipeUpdateIngredients(recipe) {
 
     // input form for updating ingredients
     renderRecipeIngredientDropdowns(table, recipe);
+
+    // existing ingredients with recipe
+    tblList = table.append("div")
+        .attr("id", "ingredients-list")
+    renderRecipeIngredients(tblList, recipe);
 }
 
 function renderRecipeIngredientDropdowns(table, recipe) {
     ingInput = table.append("div")
-        .attr("class", "row");
+        .attr("class", "row pb-3");
 
     ingAddName = ingInput.append("div")
         .attr("class", "col-6");
@@ -355,7 +400,7 @@ function renderRecipeIngredientDropdowns(table, recipe) {
             .attr("id", "ingredient-add-name")
             .attr("class", "form-control")
             .attr("type", "text")
-            .attr("list", "ingredients-list");
+            .attr("list", "ingredients-add");
 
     ingInput.append("div")
         .attr("class", "col-2")
@@ -426,7 +471,14 @@ function renderRecipeIngredientDropdowns(table, recipe) {
                     nextIngredient.unit = addUnit;
                 }
                 recipe.ingredients.push(nextIngredient);
-                console.log("adding ingredient, " + nextIngredient.name);
+                d3.select("#ingredients-list").selectAll("*").remove();
+                tblList = d3.select("#ingredients-list");
+                renderRecipeIngredients(tblList, recipe);
+
+                // clear inputs
+                d3.select("#ingredient-add-name").property("value", "");
+                d3.select("#ingredient-add-size").property("value", "");
+                d3.select("#ingredient-add-quantity").property("value", "");
             });
 
     d3.request("/ingredients")
@@ -436,7 +488,7 @@ function renderRecipeIngredientDropdowns(table, recipe) {
             store.ingredients = ingredients;
             if (ingredients) {
                 ingAddName.append("datalist")
-                    .attr("id", "ingredients-list")
+                    .attr("id", "ingredients-add")
                     .selectAll("option")
                     .data(ingredients)
                     .enter()
@@ -446,33 +498,34 @@ function renderRecipeIngredientDropdowns(table, recipe) {
         })
 }
 
-function renderRecipeUpdate(recipe) {
-    clearRecipeUpdate();
-    renderRecipeUpdateTitle(recipe);
-    renderRecipeTagDropdown(recipe); 
-    d3.select("#table-recipe-ingredients")
-        .append("h4")
-        .attr("class", "pt-4")
-        .text("Ingredients");
-    renderRecipeUpdateIngredients(recipe);
-    /*
-    <button type="button" class="btn btn-primary btn-sm">Small button</button>
-    */
-    btn = d3.select("#button-save-recipe")
+function renderRecipeIngredients(tblList, recipe) { 
+    ingRow = tblList.selectAll("div")
+        .data(recipe.ingredients)
+        .enter()
         .append("div")
-        .attr("class", "col-3 px-2 pt-2");
+            .attr("class", "row");
 
-    btn.append("button")
-        .attr("class", "btn btn-primary btn-sm")
-        .text("Save")
-        .on("click", (_, d) => {
-            d3.request("/recipe")
-                .send("PUT", JSON.stringify(recipe), function(error, data) {
-                    if (error) {
-                        console.log(error);
-                        return
-                    }
-                    console.log(recipe);
-                });
-        });
+    ingName = ingRow.append("div")
+        .attr("class", "col-6")
+        .append("p")
+            .attr("id", d => "ingredient-name-"+d.name)
+            .text(d => d.name);
+
+    ingQuant = ingRow.append("div")
+        .attr("class", "col-2")
+        .append("p")
+            .attr("id", d => "ingredient-quantity-"+d.name)
+            .text(d => d.quantity);
+
+    ingSize = ingRow.append("div")
+        .attr("class", "col-2");
+        
+    ingSize.append("p")
+            .attr("id", d => "ingredient-size-"+d.name)
+            .text(d => {
+                if (d.size) {
+                    return d.size
+                }
+                return d.unit
+            });
 }
