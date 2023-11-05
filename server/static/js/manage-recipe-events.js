@@ -48,7 +48,7 @@ function renderRecipeEvents() {
                 getRecipesByRecipeEventID(d.id);
             })
         .append("d")
-            .attr("class", "col-10 small")
+            .attr("class", "col-10 mb-1 small")
             .html((d) => {
                 links = ""
                 if (d.url_links) {
@@ -309,7 +309,7 @@ function renderRecipeTagDropdown(recipe) {
                     .text("Tags");
 
                 tagInput.append("div")
-                    .attr("class", "dropdown-menu")
+                    .attr("class", "dropdown-menu tag-dropdown-scrollarea")
                     .attr("aria-labelledby", "input-update-tag")
                     .selectAll("a")
                     .data(tags)

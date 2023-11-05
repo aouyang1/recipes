@@ -78,7 +78,7 @@ function renderListItems() {
         .data(items)
         .enter()
         .append("a")
-            .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
+            .attr("class", "list-group-item list-group-item-action lh-tight")
             .attr("id", d => "list-" + d.name)
             .attr("data-bs-toggle", "list")
             .on("click", (_, recipe) => {
@@ -90,7 +90,7 @@ function renderListItems() {
             .html((d) => {
                 return "<div class=\"row\">"+
                 "<div class=\"col-11\">"+d.name+"</div>"+
-                "<div class=\"col-1\">"+(d.recipe_count > 0 ? d.recipe_count : "")+"</div>"+
+                "<div class=\"col-1\"><span class=\"badge bg-primary rounded-pill\">"+(d.recipe_count > 0 ? d.recipe_count : "")+"</span></div>"+
                 "</div>"
             });
 }

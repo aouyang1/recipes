@@ -68,6 +68,11 @@ main {
   overflow-y: auto;
 }
 
+.tag-dropdown-scrollarea {
+  height: 50vh;
+  overflow-y: auto;
+}
+
 .list-group-item.active {
   color: #141619;
   background-color: #d3d3d4;
