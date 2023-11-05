@@ -62,3 +62,13 @@ main {
   height: 80vh;
   overflow-y: auto;
 }
+
+.recipe-ingredient-scrollarea {
+  height: 50vh;
+  overflow-y: auto;
+}
+
+.list-group-item.active {
+  color: #141619;
+  background-color: #d3d3d4;
+}

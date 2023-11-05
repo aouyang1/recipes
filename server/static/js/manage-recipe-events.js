@@ -39,7 +39,7 @@ function renderRecipeEvents() {
         .data(items)
         .enter()
         .append("p")
-            .attr("class", "list-group-item list-group-item-action py-3 lh-tight")
+            .attr("class", "list-group-item list-group-item-action lh-tight")
             .attr("id", d => "recipe_event-" + d.id)
             .attr("data-bs-toggle", "list")
             .on("click", (_, d) => {
@@ -48,7 +48,7 @@ function renderRecipeEvents() {
                 getRecipesByRecipeEventID(d.id);
             })
         .append("d")
-            .attr("class", "col-10 mb-1 small")
+            .attr("class", "col-10 small")
             .html((d) => {
                 links = ""
                 if (d.url_links) {
@@ -61,7 +61,7 @@ function renderRecipeEvents() {
                 }
                 return "<div class=\"row\">"+
                 "<div class=\"col-7\">"+d.title+links+"</div>"+
-                "<div class=\"col-1\">"+(d.count > 0 ? d.count : "")+"</div>"+
+                "<div class=\"col-1\"><span class=\"badge bg-primary rounded-pill\">"+(d.count > 0 ? d.count : "")+"</span></div>"+
                 "<div class=\"col-4\">"+d.date.slice(0, 10)+"</div>"+
                 "</div>"
             });
@@ -386,6 +386,8 @@ function renderRecipeUpdateIngredients(recipe) {
     // existing ingredients with recipe
     tblList = table.append("div")
         .attr("id", "ingredients-list")
+        .attr("class", "recipe-ingredient-scrollarea");
+
     renderRecipeIngredients(tblList, recipe);
 }
 
